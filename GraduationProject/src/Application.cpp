@@ -54,17 +54,20 @@ int main()
     
     //=====================  test  =========================
     std::string testShaderPath = "res/shaders/whitted.shader";
-
+    std::string lightShaderPath = "res/shaders/basic.shader";
     //=====================================================
     Scene myScene;
 
     Sphere textSphere1({ 0.0,0,0 }, 1, { 1.0, 1.0, 1.0 });
     Sphere textSphere2({ 1.0,1.0,0 }, 0.5, { 0.0, 1.0, 0.0 });
     Sphere textSphere3( {-1.0, 1.0, 0}, 0.5, { 0.0, 0.0, 1.0 });
+    Sphere lightSphere({ 5, 5, 5 }, 0.1, { 1,1,1 });
+    lightSphere.material.emissive = glm::vec3(1.0);
 
     myScene.push(&textSphere1, testShaderPath);
     myScene.push(&textSphere2, testShaderPath);
     myScene.push(&textSphere3, testShaderPath);
+    myScene.push(&lightSphere, lightShaderPath);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.

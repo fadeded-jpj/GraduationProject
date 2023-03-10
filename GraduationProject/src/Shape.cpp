@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 128;
-const unsigned int Y_SEGMENTS = 128;
+const unsigned int X_SEGMENTS = 8;
+const unsigned int Y_SEGMENTS = 8;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -310,12 +310,6 @@ void Sphere::Draw(Shader& shader)
     shader.SetUniformMat4f("projection", projection);
     shader.SetUniformMat4f("view", view);
     shader.SetUniformMat4f("model", model);
-    
-    /*shader.SetUniform3fv("material.color", material.color);
-    shader.SetUniform1f("material.ao", material.ao);
-    shader.SetUniform1f("material.metallic", material.metallic);
-    shader.SetUniform1f("material.roughness", material.roughness);*/
-
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);

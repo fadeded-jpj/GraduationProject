@@ -3,6 +3,7 @@
 #include <random>
 #include <iostream>
 
+#include "Camera.h"
 //--------random function------------------
 //extern std::uniform_real_distribution<> dis(0.0, 1.0);
 //extern std::random_device rd;
@@ -11,7 +12,7 @@ extern double randf();
 extern glm::vec3 randomVec3();
 extern glm::vec3 randomDir(glm::vec3 n);
 
-
+extern Camera camera;
 //-----------end------------------------
 
 Scene::Scene(std::vector<std::pair<shape*, std::string>> model)
@@ -65,29 +66,29 @@ glm::vec3 Scene::pathTracing(Ray ray, int depth)
 void Scene::Draw()
 {
 	//TODO: 三角形数据按照model的顺序依次传入buffer, 设置index
-	int n = models.size();
-	int index = 0;
-
 	if (!inited) {
 		initTrianglesData();
 		inited = true;
 	}
+	int n = models.size();
+	int maxNum = trianglesData.size();
+
 
 	for (int i = 0; i < n; i++) {
 		Shader shader(models[i].second);
 		auto& model = models[i].first;
 
 		shader.Bind();
-		shader.SetUniform1i("index", index);
-		//std::cout << i << std::endl;
+		if (i < n - 1) {
+			shader.SetUniform1i("nums", maxNum);
+			shader.SetUniform3fv("cameraPos", camera.GetPosition());
+			//std::cout << camera.GetPosition().x << std::endl;
 
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_BUFFER, texBuffer);
-		shader.SetUniform1i("triangles", 0);
-
+			glActiveTexture(GL_TEXTURE0);
+			glBindTexture(GL_TEXTURE_BUFFER, texBuffer);
+			shader.SetUniform1i("triangles", 0);
+		}
 		model->Draw(shader);
-
-		index += 32768;
 	}
 }
 
