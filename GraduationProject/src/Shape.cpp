@@ -301,14 +301,12 @@ Sphere::~Sphere()
 void Sphere::Draw(Shader& shader)
 {
     shader.Bind();
-    glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-    glm::mat4 view = camera.GetViewMatrix();
+    
     glm::mat4 model = glm::mat4(1.0);
     model = glm::translate(model, center);
     model = glm::scale(model, { R,R,R });
 
-    shader.SetUniformMat4f("projection", projection);
-    shader.SetUniformMat4f("view", view);
+    
     shader.SetUniformMat4f("model", model);
 
     glBindVertexArray(VAO);

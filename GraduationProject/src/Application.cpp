@@ -55,6 +55,10 @@ int main()
     //=====================  test  =========================
     std::string testShaderPath = "res/shaders/whitted.shader";
     std::string lightShaderPath = "res/shaders/basic.shader";
+
+    Shader testShader(testShaderPath);
+    Shader lightShader(lightShaderPath);
+
     //=====================================================
     Scene myScene;
 
@@ -64,10 +68,10 @@ int main()
     Sphere lightSphere({ 5, 5, 5 }, 0.1, { 1,1,1 });
     lightSphere.material.emissive = glm::vec3(1.0);
 
-    myScene.push(&textSphere1, testShaderPath);
-    myScene.push(&textSphere2, testShaderPath);
-    myScene.push(&textSphere3, testShaderPath);
-    myScene.push(&lightSphere, lightShaderPath);
+    myScene.push(&textSphere1, testShader);
+    myScene.push(&textSphere2, testShader);
+    myScene.push(&textSphere3, testShader);
+    myScene.push(&lightSphere, lightShader);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -98,6 +102,17 @@ int main()
 
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
+        glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera.GetViewMatrix();
+        
+        testShader.Bind();
+        testShader.SetUniformMat4f("projection", projection);
+        testShader.SetUniformMat4f("view", view);
+
+        lightShader.Bind();
+        lightShader.SetUniformMat4f("projection", projection);
+        lightShader.SetUniformMat4f("view", view);
 
         myScene.Draw();
 

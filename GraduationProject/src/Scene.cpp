@@ -15,11 +15,11 @@ extern glm::vec3 randomDir(glm::vec3 n);
 extern Camera camera;
 //-----------end------------------------
 
-Scene::Scene(std::vector<std::pair<shape*, std::string>> model)
+Scene::Scene(std::vector<std::pair<shape*, Shader&>> model)
 	:models(model), inited(false), modified(false), tbo(0), texBuffer(0)
 {}
 
-void Scene::push(shape* s, std::string path)
+void Scene::push(shape* s, Shader& path)
 {
 	models.push_back({s, path});
 }
@@ -75,7 +75,7 @@ void Scene::Draw()
 
 
 	for (int i = 0; i < n; i++) {
-		Shader shader(models[i].second);
+		auto& shader = models[i].second;
 		auto& model = models[i].first;
 
 		shader.Bind();
