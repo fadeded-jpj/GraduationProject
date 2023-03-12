@@ -3,12 +3,15 @@
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
 
+out vec3 pix;
+
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
+	pix = aPos;
 	gl_Position = projection * view * model * vec4(aPos, 1.0f);
 }
 
@@ -16,6 +19,8 @@ void main()
 #shader fragment
 #version 330 core
 out vec4 FragColor;
+
+in vec3 pix;
 
 #define TRIANGLE_SIEZ 9
 #define INF 12138
@@ -55,11 +60,49 @@ struct Model {
 
 	// TODO: AABB
 };
+
+uniform uint frameCount;
+uniform vec2 screenSize;
+
+uint wseed = frameCount;
+
 //================================
 
 uniform samplerBuffer triangles;
 uniform int nums;
 uniform vec3 cameraPos;
+
+//=========================== Random =======================
+uint whash(uint seed)
+{
+	seed = (seed ^ uint(61)) ^ (seed >> uint(16));
+	seed *= uint(9);
+	seed = seed ^ (seed >> uint(4));
+	seed *= uint(0x27d4eb2d);
+	seed = seed ^ (seed >> uint(15));
+	return seed;
+}
+
+float randcore4()
+{
+	wseed = whash(wseed);
+
+	return float(wseed) * (1.0 / 4294967296.0);
+}
+
+
+float rand()
+{
+	return randcore4();
+}
+
+vec3 randVec3()
+{
+	return vec3(rand(), rand(), rand());
+}
+
+//===========================================================
+
 
 Triangle getTriangle(int i) {
 	int offset = i * TRIANGLE_SIEZ;
@@ -189,7 +232,7 @@ void main()
 	
 	HitResult res = HitArray(ray, 0, nums);
 
-	if(res.isHit)
-		FragColor = vec4(res.material.baseColor, 1.0f);
-	
+	vec3 color = randVec3();
+
+	FragColor = vec4(color, 1.0f);
 }

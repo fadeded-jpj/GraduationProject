@@ -19,6 +19,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+unsigned int frameCount = 0;
 
 //--------data settings-----------
 const float PI = 3.141592653;

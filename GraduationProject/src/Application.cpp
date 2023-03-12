@@ -109,6 +109,8 @@ int main()
         testShader.Bind();
         testShader.SetUniformMat4f("projection", projection);
         testShader.SetUniformMat4f("view", view);
+        testShader.SetUniform1ui("frameCount", frameCount++);
+        testShader.SetUniform2uiv("screenSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
 
         lightShader.Bind();
         lightShader.SetUniformMat4f("projection", projection);

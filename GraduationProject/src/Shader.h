@@ -31,6 +31,8 @@ public:
 	void SetUniform1ui(const std::string& name, unsigned int value);
 	void SetUniform4f(const std::string& name, float v0, float v1, float v2, float v3);
 	void SetUniform3fv(const std::string& name, const glm::vec3& value);
+	void SetUniform2fv(const std::string& name, const glm::vec2& value);
+	void SetUniform2uiv(const std::string& name, const glm::uvec2& value);
 	
 private:
 	ShaderProgramSource ParseShader(const std::string& filepath);
