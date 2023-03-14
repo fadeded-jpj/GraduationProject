@@ -15,13 +15,79 @@ extern glm::vec3 randomDir(glm::vec3 n);
 extern Camera camera;
 //-----------end------------------------
 
-Scene::Scene(std::vector<std::pair<shape*, Shader&>> model)
-	:models(model), inited(false), modified(false), tbo(0), texBuffer(0)
-{}
-
-void Scene::push(shape* s, Shader& path)
+Scene::Scene()
+	:inited(false), modified(false), tbo(0), texBuffer(0)
 {
-	models.push_back({s, path});
+	vertices = {
+		1.0f,  1.0f, 0.0f,  // top right
+		1.0f, -1.0f, 0.0f,  // bottom right
+	   -1.0f, -1.0f, 0.0f,  // bottom left
+	   -1.0f,  1.0f, 0.0f   // top left 
+	};
+
+	indices = {
+		0, 1, 3,   // first triangle
+		1, 2, 3    // second triangle
+	};
+
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+}
+
+Scene::Scene(std::vector<shape*> model)
+	:inited(false), modified(false), tbo(0), texBuffer(0)
+{
+	vertices = {
+		1.0f,  1.0f, 0.0f,  // top right
+		1.0f, -1.0f, 0.0f,  // bottom right
+	   -1.0f, -1.0f, 0.0f,  // bottom left
+	   -1.0f,  1.0f, 0.0f   // top left 
+	};
+
+	indices = {
+		0, 1, 3,   // first triangle
+		1, 2, 3    // second triangle
+	};
+	
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+}
+
+Scene::~Scene()
+{
+	glDeleteBuffers(1, &tbo);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteTextures(1, &texBuffer);
+
+}
+
+void Scene::push(shape* s)
+{
+	models.push_back(s);
 }
 
 void Scene::push(Light light)
@@ -29,74 +95,31 @@ void Scene::push(Light light)
 	Lights.push_back(light);
 }
 
-glm::vec3 Scene::pathTracing(Ray ray, int depth)
+
+void Scene::Render(Shader& shader)
 {
-	glm::vec3 color = glm::vec3(0);
-
-	//递归深度
-	if(depth <= 0)
-		return color;
-	
-	// 实现RR
-	double r = randf();
-	float p = 0.8;		// RR命中概率
-
-	if (r > p)
-		return color;
-	
-	std::vector<shape*> shapes;
-	for (auto& [s, _] : models)
-		shapes.push_back(s);
-	
-	HitResult res = shoot(shapes, ray);
-
-	// 自发光就忽略反射光
-	if (res.material.emissive != glm::vec3(0))
-		color = res.material.emissive;
-	else 
-	{
-		Ray newRay(res.hitPoint, randomDir(res.material.normal));
-		float cosine = glm::dot(-ray.dir, res.material.normal);
-		color = res.material.color * pathTracing(newRay, depth - 1);
-	}
-	
-	return color / p;
-}
-
-void Scene::Draw()
-{
-	//TODO: 三角形数据按照model的顺序依次传入buffer, 设置index
 	if (!inited) {
 		initTrianglesData();
 		inited = true;
 	}
-	int n = models.size();
-	int maxNum = trianglesData.size();
 
+	shader.Bind();
+	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
+	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
+	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
+	shader.SetUniform3fv("camera.origin", {0 , 0 ,0});
+	shader.SetUniform1i("triangleCount", trianglesData.size());
 
-	for (int i = 0; i < n; i++) {
-		auto& shader = models[i].second;
-		auto& model = models[i].first;
-
-		shader.Bind();
-		if (i < n - 1) {
-			shader.SetUniform1i("nums", maxNum);
-			shader.SetUniform3fv("cameraPos", camera.GetPosition());
-			//std::cout << camera.GetPosition().x << std::endl;
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_BUFFER, texBuffer);
-			shader.SetUniform1i("triangles", 0);
-		}
-		model->Draw(shader);
-	}
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
 }
+
 
 void Scene::initTrianglesData()
 {
 	int n = models.size();
 	for (int i = 0; i < n; i++) {
-		auto& it = models[i].first;
+		auto& it = models[i];
 		auto data = it->getCodedData();
 
 		trianglesData.insert(trianglesData.end(), data.begin(), data.end());	//把每一个数据存入数据库

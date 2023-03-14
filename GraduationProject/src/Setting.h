@@ -11,7 +11,8 @@ extern const unsigned int SCR_HEIGHT = 1200;
 
 
 //----------camera settings------------
-extern Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+extern Camera camera(glm::vec3(0.0f, 0.0f, 4.0f));
+extern Camera viewCamera(glm::vec3(0.0f, 0.0f, 4.0f));
 float lastX = SCR_HEIGHT / 2.0f;
 float lastY = SCR_WIDTH / 2.0f;
 bool firstMouse = true;

@@ -6,6 +6,7 @@ Camera::Camera(const glm::vec3 pos, const glm::vec3 worldUp)
 	m_Pitch(0.0f), m_Yaw(-90.0f), m_MouseSensitivity(0.01f),
 	m_Fov(60.0f)
 {
+	eye = m_Pos;
 	updateCameraVector();
 }
 
@@ -23,6 +24,28 @@ void Camera::updateCameraVector()
 glm::mat4 Camera::GetViewMatrix() const
 {
 	return glm::lookAt(m_Pos, m_Pos + m_Front, m_Up);
+}
+
+glm::mat4 Camera::GetCameraRotate()
+{
+	glm::mat4 res = glm::lookAt(GetEye(), glm::vec3(0, 0, 0), m_Up);
+	return glm::inverse(res);
+	//return res;
+}
+
+glm::vec3 Camera::GetEye()
+{	
+	/*glm::vec3 eye = glm::vec3(-sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
+		sin(glm::radians(m_Yaw)),
+		cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)));*/
+	//glm::vec3 eye = m_Pos;
+	/*eye.x *= 4.0;
+	eye.y *= 4.0;
+	eye.z *= 4.0;*/
+	glm::vec3 res = m_Pos;
+
+	return res;
+	//return eye;
 }
 
 void Camera::ProcessKeyboard(const Camera_Movement dir, const float delatTime)

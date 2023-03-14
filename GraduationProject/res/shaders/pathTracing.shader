@@ -1,20 +1,18 @@
 #shader vertex
 #version 330 core
 layout(location = 0) in vec3 aPos;
-layout(location = 1) in vec3 aNormal;
 
-out vec3 pix;
 out vec2 screenCoord;
 
-uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-	pix = aPos;
+	//gl_Position = projection * view * vec4(aPos, 1.0f);
+	gl_Position = vec4(aPos, 1.0f);
+
 	screenCoord = (vec2(aPos.x, aPos.y) + 1.0) / 2.0;
-	gl_Position = projection * view * model * vec4(aPos, 1.0f);
 }
 
 
@@ -22,12 +20,13 @@ void main()
 #version 330 core
 out vec4 FragColor;
 
-in vec3 pix;
+in vec2 screenCoord;
 
 #define TRIANGLE_SIEZ 9
 #define INF 12138
 #define PI 3.1415926535859
 
+// =========== Struct=============
 struct Material {
 	vec3 emissive;
 	vec3 baseColor;
@@ -57,32 +56,25 @@ struct HitResult {
 	Material material;
 };
 
-//============ Plan ==============
-struct Model {
-	int begin, end; // 模型三角形的起始和最后
-
-	// TODO: AABB
+struct Camera
+{
+	vec3 lower_left_corner;
+	vec3 horizontal;
+	vec3 vertical;
+	vec3 origin;
 };
 
-in vec2 screenCoord;
 
-uniform uint frameCount;
-uniform vec2 screenSize;
-
-uniform mat4 cameraRotate;
-
-uint wseed = uint(
-	uint((pix.x * 0.5 + 0.5) * screenSize.x) * uint(1973) +
-	uint((pix.y * 0.5 + 0.5) * screenSize.y) * uint(9277) +
-	uint(frameCount) * uint(26699)) | uint(1);
-
-//================================
-
+// ============= uniform===================
+uniform Camera camera;
 uniform samplerBuffer triangles;
-uniform int nums;
-uniform vec3 cameraPos;
+uniform int triangleCount;
+uniform uint frameCount;
 
+// ============= funcion ==================
 //=========================== Random =======================
+uint wseed = frameCount;
+
 uint whash(uint seed)
 {
 	seed = (seed ^ uint(61)) ^ (seed >> uint(16));
@@ -131,20 +123,6 @@ vec3 toNormalHemisphere(vec3 V, vec3 N)
 	vec3 bitangent = normalize(cross(N, tangent));
 	return V.x * tangent + V.y * bitangent + V.z * N;
 }
-
-struct Camera
-{
-	vec3 lower_left_corner;
-	vec3 horizontal;
-	vec3 vertical;
-	vec3 origin;
-};
-
-uniform Camera camera;
-
-
-//===========================================================
-
 
 Triangle getTriangle(int i) {
 	int offset = i * TRIANGLE_SIEZ;
@@ -233,7 +211,7 @@ HitResult TriangleIntersect(Triangle t, Ray ray)
 		res.distance = T;
 		res.HitPoint = P;
 		res.viewDir = D;
-		
+
 		//法线插值
 		float alpha = (-(P.x - p2.x) * (p3.y - p2.y) + (P.y - p2.y) * (p3.x - p2.x)) / (-(p1.x - p2.x - 0.00005) * (p3.y - p2.y + 0.00005) + (p1.y - p2.y + 0.00005) * (p3.x - p2.x + 0.00005));
 		float beta = (-(P.x - p3.x) * (p1.y - p3.y) + (P.y - p3.y) * (p1.x - p3.x)) / (-(p2.x - p3.x - 0.00005) * (p1.y - p3.y + 0.00005) + (p2.y - p3.y + 0.00005) * (p1.x - p3.x + 0.00005));
@@ -251,11 +229,11 @@ HitResult HitArray(Ray ray, int left, int right)
 	HitResult res;
 	res.isHit = false;
 	res.distance = INF;
-	
+
 	for (int i = left; i <= right; i++)
 	{
 		Triangle t = getTriangle(i);
-		
+
 		HitResult tmp = TriangleIntersect(t, ray);
 		if (tmp.isHit && tmp.distance < res.distance) {
 			res = tmp;
@@ -265,12 +243,10 @@ HitResult HitArray(Ray ray, int left, int right)
 	return res;
 }
 
-//============ pathTracing==============
 vec3 pathTracing(HitResult hit, int maxBounce) {
 	vec3 Lo = vec3(0);
 	vec3 history = vec3(1);
 
-	float RR = rand();
 	while (maxBounce > 0)
 	{
 		vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
@@ -279,14 +255,14 @@ vec3 pathTracing(HitResult hit, int maxBounce) {
 		ray.start = hit.HitPoint;
 		ray.dir = wi;
 
-		HitResult newHit = HitArray(ray, 0, nums);
+		HitResult newHit = HitArray(ray, 0, triangleCount);
 
 		if (!newHit.isHit)
 			break;
 
 		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
 		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
-		float cosine_i = max(0, dot(-ray.dir, hit.normal));				// 出射光和法线夹角余弦
+		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
 		vec3 f_r = hit.material.baseColor / PI;
 
 		vec3 Le = newHit.material.emissive;
@@ -294,39 +270,35 @@ vec3 pathTracing(HitResult hit, int maxBounce) {
 
 		hit = newHit;
 		history *= f_r * cosine_i / (pdf * 1);
-		RR = rand();
-		maxBounce--;
+		
 	}
 	return Lo;
 }
-//======================================
 
-vec3 WorldTrace(Ray ray)
+vec3 WorldTrace(Ray ray, int depth)
 {
-	HitResult res = HitArray(ray, 0, nums);
+	vec3 current_attenuation = vec3(1.0, 1.0, 1.0);
+	Ray current_ray = ray;
 
-	if (res.isHit && !res.isInside)
+	while (depth > 0)
 	{
-		vec3 N = res.normal;
-		return 0.5 * vec3(N.x + 1, N.y + 1, N.z + 1);
+		depth--;
+		HitResult hit = HitArray(current_ray, 0, triangleCount);
+		if (hit.isHit)
+		{
+			vec3 attenuation;
+			Ray scatter_ray;
+
+			current_attenuation *= attenuation;
+			current_ray = scatter_ray;
+		}
+		else
+		{
+			return current_attenuation;
+		}
 	}
-	else
-	{
-		vec3 unit_direction = normalize(ray.dir);
-		float t = 0.5 * (unit_direction.y + 1.0);
-		return (1.0 - t) * vec3(1.0, 1.0, 1.0) + t * vec3(0.5, 0.7, 1.0);
-		//return vec3(0);
-	}
 
-}
-
-Ray CameraGetRay(Camera camera, vec2 offset)
-{
-	Ray ray;
-	ray.start = camera.origin;
-	ray.dir = normalize(camera.lower_left_corner + offset.x * camera.horizontal + offset.y * camera.vertical);
-
-	return ray;
+	return vec3(0.0, 0.0, 0.0);
 }
 
 void main()
@@ -334,30 +306,13 @@ void main()
 	float u = screenCoord.x;
 	float v = screenCoord.y;
 
-	vec3 col = vec3(0.0, 0.0, 0.0);
-	int ns = 5;
-	for (int i = 0; i < ns; i++)
-	{
-		Ray ray = CameraGetRay(camera, vec2(u, v) + rand2() / screenSize);
-		col += WorldTrace(ray);
-	}
-	col /= ns;
-
-	Ray ray2;
-	ray2.start = camera.origin;
-	ray2.dir = camera.lower_left_corner +
+	Ray ray;
+	ray.start = camera.origin;
+	ray.dir = camera.lower_left_corner +
 		u * camera.horizontal +
 		v * camera.vertical - camera.origin;
 
-	HitResult hit = HitArray(ray2, 0, nums);
-	vec3 color = vec3(0);
-	if (hit.isHit) {
-		vec3 Le = hit.material.emissive;
-		vec3 Li = pathTracing(hit, 2);
-		color = Le + Li;
-	}
-	//FragColor.xyz = WorldTrace(ray2);
-	//FragColor.xyz = color;
-	FragColor.xyz = col;
+	HitResult res = HitArray(ray, 0, triangleCount);
+	FragColor.xyz = pathTracing(res, 2);
 	FragColor.w = 1.0;
 }

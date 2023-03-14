@@ -1329,6 +1329,7 @@
     <None Include="res\shaders\PBR.Shader" />
     <None Include="res\shaders\encoded.shader" />
     <None Include="res\shaders\whitted.shader" />
+    <None Include="res\shaders\pathTracing.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">

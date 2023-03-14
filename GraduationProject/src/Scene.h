@@ -7,23 +7,25 @@
 
 class Scene {
 private:
-	std::vector<std::pair<shape*, Shader&>> models;
+	std::vector<shape*> models;
 	std::vector<Light> Lights;
+
+	std::vector<float> vertices;
+	std::vector<unsigned int> indices;
 
 	std::vector<Triangle_encoded> trianglesData;
 	GLuint tbo, texBuffer;
+	GLuint VAO, VBO, EBO;
 	bool inited, modified;
 public:
-	Scene() :inited(false), modified(false), tbo(0), texBuffer(0){}
-	Scene(std::vector<std::pair<shape*, Shader&>> model);
-	~Scene() {}
+	Scene();
+	Scene(std::vector<shape*> model);
+	~Scene();
 
-	void push(shape* s, Shader& path);
+	void push(shape* s);
 	void push(Light light);
 	
-	glm::vec3 pathTracing(Ray ray, int depth);
-
-	void Draw();
+	void Render(Shader& shader);
 private:
 	void initTrianglesData();
 };

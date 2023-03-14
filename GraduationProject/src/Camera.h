@@ -28,6 +28,7 @@ private:
 	float m_MouseSensitivity;
 
 	float m_Fov;
+	glm::vec3 eye;
 
 	void updateCameraVector();
 public:
@@ -35,9 +36,13 @@ public:
 	~Camera() {}
 
 	glm::mat4 GetViewMatrix() const;
+	glm::mat4 GetCameraRotate();
+	glm::vec3 GetEye();
 	inline float GetFov() const { return m_Fov; }
 	inline glm::vec3 GetPosition() const { return m_Pos; }
 	inline glm::vec3 GetFront() const { return m_Front; }
+	inline glm::vec3 GetUp() const { return m_Up; }
+	inline glm::vec3 GetRight() const { return m_Right; }
 
 	void ProcessKeyboard(const Camera_Movement dir, const float delatTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);

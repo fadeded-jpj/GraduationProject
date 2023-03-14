@@ -51,6 +51,7 @@ public:
 	virtual HitResult intersect(Ray ray) = 0;
 	virtual void Draw(Shader& shader) = 0;
 	virtual std::vector<Triangle_encoded> getCodedData() = 0;
+	virtual void setEmissive(glm::vec3 emissive) = 0;
 };
 
 struct Triangle : public shape
@@ -101,6 +102,7 @@ public:
 	
 	void Draw(Shader& shader);
 	HitResult intersect(Ray ray);
+	void setEmissive(glm::vec3 emissive);
 
 	std::vector<Triangle_encoded> getCodedData() { return triangles; }
 };

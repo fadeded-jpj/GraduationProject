@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 8;
-const unsigned int Y_SEGMENTS = 8;
+const unsigned int X_SEGMENTS = 16;
+const unsigned int Y_SEGMENTS = 16;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -139,6 +139,8 @@ HitResult shoot(std::vector<shape*>& shapes, Ray ray)
 
 void Sphere::encodedData()
 {
+    if (!triangles.empty())
+        triangles.clear();
     for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
     {
         for (int x = 0; x < X_SEGMENTS; x++)
@@ -167,13 +169,13 @@ void Sphere::encodedData()
             tri2.n1 = normals[Pos20];
             tri2.n2 = normals[Pos21];
             tri2.n3 = normals[Pos22];
-
-            tri1.baseColor = material.color;
+            
             tri1.emissive = material.emissive;
+            tri1.baseColor = material.color;
             tri1.param1 = glm::vec3(material.ao, material.roughness, material.metallic);
 
-            tri2.baseColor = material.color;
             tri2.emissive = material.emissive;
+            tri2.baseColor = material.color;
             tri2.param1 = glm::vec3(material.ao, material.roughness, material.metallic);
 
             triangles.push_back(tri1);
@@ -202,7 +204,9 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
             float yPos = std::cos(ySegment * PI);
             float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
 
-            positions.push_back(glm::vec3(xPos, yPos, zPos));
+            positions.push_back(R * glm::vec3(xPos, yPos, zPos) + center);
+            //positions.push_back(glm::vec3(xPos, yPos, zPos));
+
             uv.push_back(glm::vec2(xSegment, ySegment));
             normals.push_back(glm::vec3(xPos, yPos, zPos));
         }
@@ -230,24 +234,6 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
             indices.push_back(Pos21);
             indices.push_back(Pos22);
         }
-
-        //if (!oddRow) // even rows: y == 0, y == 2; and so on
-        //{
-        //    for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
-        //    {
-        //        indices.push_back(y * (X_SEGMENTS + 1) + x);
-        //        indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-        //    }
-        //}
-        //else
-        //{
-        //    for (int x = X_SEGMENTS; x >= 0; --x)
-        //    {
-        //        indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
-        //        indices.push_back(y * (X_SEGMENTS + 1) + x);
-        //    }
-        //}
-        //oddRow = !oddRow;
     }
     unsigned int indexCnt = static_cast<unsigned int>(indices.size());
 
@@ -301,16 +287,15 @@ Sphere::~Sphere()
 void Sphere::Draw(Shader& shader)
 {
     shader.Bind();
-    
-    glm::mat4 model = glm::mat4(1.0);
-    model = glm::translate(model, center);
-    model = glm::scale(model, { R,R,R });
-
-    
-    shader.SetUniformMat4f("model", model);
 
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Sphere::setEmissive(glm::vec3 emissive)
+{
+    material.emissive = emissive;
+    encodedData();
 }
 
 HitResult Sphere::intersect(Ray ray)
@@ -381,6 +366,8 @@ std::vector<Triangle_encoded> Triangle::encodeData(std::vector<Triangle>& triang
 
         // material
         res[i].emissive = m.emissive;
+        if (m.emissive == glm::vec3(1.0))
+            std::cout << "shape light" << std::endl;
         res[i].baseColor = m.color;
         res[i].param1 = glm::vec3(m.ao, m.roughness, m.metallic);
     }

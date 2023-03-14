@@ -451,6 +451,7 @@
   <ItemGroup>
     <None Include="res\shaders\basic.shader" />
     <None Include="res\shaders\encoded.shader" />
+    <None Include="res\shaders\pathTracing.shader" />
     <None Include="res\shaders\PBR.Shader" />
     <None Include="res\shaders\whitted.shader" />
     <None Include="src\vendor\glm\detail\func_common.inl" />

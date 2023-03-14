@@ -50,28 +50,27 @@ int main()
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
    
-    Shader shader("res/shaders/PBR.shader");
+    Shader basic("res/shaders/basic.shader");
+    Shader shader("res/shaders/pathTracing.shader");
     
     //=====================  test  =========================
-    std::string testShaderPath = "res/shaders/whitted.shader";
-    std::string lightShaderPath = "res/shaders/basic.shader";
-
-    Shader testShader(testShaderPath);
-    Shader lightShader(lightShaderPath);
 
     //=====================================================
     Scene myScene;
 
-    Sphere textSphere1({ 0.0,0,0 }, 1, { 1.0, 1.0, 1.0 });
-    Sphere textSphere2({ 1.0,1.0,0 }, 0.5, { 0.0, 1.0, 0.0 });
-    Sphere textSphere3( {-1.0, 1.0, 0}, 0.5, { 0.0, 0.0, 1.0 });
-    Sphere lightSphere({ 5, 5, 5 }, 0.1, { 1,1,1 });
-    lightSphere.material.emissive = glm::vec3(1.0);
+    Sphere textSphere1({ 0,0,-3 }, 1, { 1.0, 1.0, 1.0 });
+    Sphere textSphere2({ 1.2, 1,-3 }, 0.5, { 0.1, 0.7, 0.1 });
+    Sphere textSphere3( {-1.2, 1, -3}, 0.5, { 0.1, 0.1, 0.7 });
+    Sphere lightSphere({ 0, 0, 5 }, 1, { 0.5,1,1 });
+    lightSphere.setEmissive(glm::vec3(1.0));
+    textSphere1.setEmissive(glm::vec3(1.0));
 
-    myScene.push(&textSphere1, testShader);
-    myScene.push(&textSphere2, testShader);
-    myScene.push(&textSphere3, testShader);
-    myScene.push(&lightSphere, lightShader);
+    myScene.push(&textSphere1);
+    myScene.push(&textSphere2);
+    myScene.push(&textSphere3);
+    myScene.push(&lightSphere);
+
+
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -105,18 +104,17 @@ int main()
         
         glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        
-        testShader.Bind();
-        testShader.SetUniformMat4f("projection", projection);
-        testShader.SetUniformMat4f("view", view);
-        testShader.SetUniform1ui("frameCount", frameCount++);
-        testShader.SetUniform2uiv("screenSize", glm::vec2(SCR_WIDTH, SCR_HEIGHT));
 
-        lightShader.Bind();
-        lightShader.SetUniformMat4f("projection", projection);
-        lightShader.SetUniformMat4f("view", view);
+        shader.Bind();
+        shader.SetUniformMat4f("projection", projection);
+        shader.SetUniformMat4f("view", view);
+        shader.SetUniform1ui("frameCount", frameCount++);
 
-        myScene.Draw();
+        myScene.Render(shader);
+        /*basic.Bind();
+        basic.SetUniformMat4f("projection", projection);
+        basic.SetUniformMat4f("view", view);
+        textSphere1.Draw(basic);*/
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
