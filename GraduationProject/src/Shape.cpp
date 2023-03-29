@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 16;
-const unsigned int Y_SEGMENTS = 16;
+const unsigned int X_SEGMENTS = 32;
+const unsigned int Y_SEGMENTS = 32;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -141,9 +141,9 @@ void Sphere::encodedData()
 {
     if (!triangles.empty())
         triangles.clear();
-    for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
+    for (unsigned int y = 0; y < Y_SEGMENTS; y++)
     {
-        for (int x = 0; x < X_SEGMENTS; x++)
+        for (unsigned int x = 0; x < X_SEGMENTS; x++)
         {
             //Èý½ÇÐÎË÷Òý 1 £¬ 2
             GLuint Pos10 = y * (X_SEGMENTS + 1) + x;

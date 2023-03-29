@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <omp.h>
+#include <algorithm>
 
 #include "Callback.h"
 #include "Shader.h"
@@ -18,7 +19,7 @@ int main()
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -61,15 +62,14 @@ int main()
     Sphere textSphere1({ 0,0,-3 }, 1, { 1.0, 1.0, 1.0 });
     Sphere textSphere2({ 1.2, 1,-3 }, 0.5, { 0.1, 0.7, 0.1 });
     Sphere textSphere3( {-1.2, 1, -3}, 0.5, { 0.1, 0.1, 0.7 });
-    Sphere lightSphere({ 0, 0, 5 }, 1, { 0.5,1,1 });
+    Sphere lightSphere({ 0, 0, 3 }, 1, { 1,1,1 });
+    textSphere1.setEmissive(glm::vec3(1));
     lightSphere.setEmissive(glm::vec3(1.0));
-    textSphere1.setEmissive(glm::vec3(1.0));
 
     myScene.push(&textSphere1);
-    myScene.push(&textSphere2);
-    myScene.push(&textSphere3);
-    myScene.push(&lightSphere);
-
+    //myScene.push(&textSphere2);
+    //myScene.push(&textSphere3);
+    //myScene.push(&lightSphere);
 
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
@@ -109,6 +109,9 @@ int main()
         shader.SetUniformMat4f("projection", projection);
         shader.SetUniformMat4f("view", view);
         shader.SetUniform1ui("frameCount", frameCount++);
+        
+        shader.SetUniform1i("width", SCR_WIDTH);
+        shader.SetUniform1i("height", SCR_HEIGHT);
 
         myScene.Render(shader);
         /*basic.Bind();

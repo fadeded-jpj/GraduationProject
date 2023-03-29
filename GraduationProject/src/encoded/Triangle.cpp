@@ -11,6 +11,12 @@ void transmitToBuffer(GLuint& tbo, GLuint& TexBuffer, std::vector<Triangle_encod
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo);
 }
 
+glm::vec3 GetTriangleCenter(const Triangle_encoded& t)
+{	
+	glm::vec3 res = (t.p1 + t.p2 + t.p3) / glm::vec3(3, 3, 3);
+	return res;
+}
+
 bool Triangle_encoded::operator==(Triangle_encoded& t)
 {
 	if(p1 != t.p1 || p2 != t.p2 || p3 != t.p3)

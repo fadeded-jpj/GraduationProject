@@ -35,17 +35,17 @@ glm::mat4 Camera::GetCameraRotate()
 
 glm::vec3 Camera::GetEye()
 {	
-	/*glm::vec3 eye = glm::vec3(-sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
+	glm::vec3 eye = glm::vec3(-sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
 		sin(glm::radians(m_Yaw)),
-		cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)));*/
+		cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)));
 	//glm::vec3 eye = m_Pos;
-	/*eye.x *= 4.0;
+	eye.x *= 4.0;
 	eye.y *= 4.0;
-	eye.z *= 4.0;*/
-	glm::vec3 res = m_Pos;
+	eye.z *= 4.0;
+	//glm::vec3 res = m_Pos;
 
-	return res;
-	//return eye;
+	//return res;
+	return eye;
 }
 
 void Camera::ProcessKeyboard(const Camera_Movement dir, const float delatTime)

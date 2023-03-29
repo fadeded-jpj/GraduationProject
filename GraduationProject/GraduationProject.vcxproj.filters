@@ -915,6 +915,9 @@
     <ClInclude Include="src\encoded\Triangle.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\BVH.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vendor\glm\detail\func_common.inl">
@@ -1381,6 +1384,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\encoded\Triangle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\BVH.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

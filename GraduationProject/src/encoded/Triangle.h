@@ -28,3 +28,5 @@ struct Triangle_encoded {
 };
 
 void transmitToBuffer(GLuint& tbo, GLuint& TexBuffer, std::vector<Triangle_encoded> data);
+
+glm::vec3 GetTriangleCenter(const Triangle_encoded& t);

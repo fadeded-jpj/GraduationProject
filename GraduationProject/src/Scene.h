@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Shape.h"
+#include "BVH.h"
 
 #include <vector>
 
@@ -14,7 +15,14 @@ private:
 	std::vector<unsigned int> indices;
 
 	std::vector<Triangle_encoded> trianglesData;
+	std::vector<BVHNode_encode> BVHData;
+	
+	// 三角形数据
 	GLuint tbo, texBuffer;
+	
+	// BVH数据
+	GLuint bvh_tbo, bvh_texBuffer;
+
 	GLuint VAO, VBO, EBO;
 	bool inited, modified;
 public:
@@ -28,4 +36,21 @@ public:
 	void Render(Shader& shader);
 private:
 	void initTrianglesData();
+	void initBVHData();
+
+	template<class T>
+	void myBindBuffer(GLuint& tbo, GLuint& buffer, std::vector<T>& data, GLuint idx = 0);
 };
+
+template<class T>
+inline void Scene::myBindBuffer(GLuint& tbo, GLuint& buffer, std::vector<T>& data, GLuint idx)
+{
+	glGenBuffers(1, &tbo);
+	glBindBuffer(GL_TEXTURE_BUFFER, tbo);
+	glBufferData(GL_TEXTURE_BUFFER, data.size() * sizeof(T), &data[0], GL_STATIC_DRAW);
+
+	glGenTextures(1, &buffer);
+	glActiveTexture(GL_TEXTURE0 + idx);
+	glBindTexture(GL_TEXTURE_BUFFER, buffer);
+	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo);
+}

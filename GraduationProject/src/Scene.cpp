@@ -16,7 +16,7 @@ extern Camera camera;
 //-----------end------------------------
 
 Scene::Scene()
-	:inited(false), modified(false), tbo(0), texBuffer(0)
+	:inited(false), modified(false), tbo(0), texBuffer(0), bvh_tbo(0), bvh_texBuffer(0)
 {
 	vertices = {
 		1.0f,  1.0f, 0.0f,  // top right
@@ -46,7 +46,7 @@ Scene::Scene()
 }
 
 Scene::Scene(std::vector<shape*> model)
-	:inited(false), modified(false), tbo(0), texBuffer(0)
+	:inited(false), modified(false), tbo(0), texBuffer(0), bvh_tbo(0), bvh_texBuffer(0)
 {
 	vertices = {
 		1.0f,  1.0f, 0.0f,  // top right
@@ -80,9 +80,10 @@ Scene::~Scene()
 	glDeleteBuffers(1, &tbo);
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
+	glDeleteBuffers(1, &bvh_tbo);
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteTextures(1, &texBuffer);
-
+	glDeleteTextures(1, &bvh_texBuffer);
 }
 
 void Scene::push(shape* s)
@@ -100,15 +101,31 @@ void Scene::Render(Shader& shader)
 {
 	if (!inited) {
 		initTrianglesData();
+		initBVHData();
 		inited = true;
 	}
 
 	shader.Bind();
 	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
-	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
-	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
-	shader.SetUniform3fv("camera.origin", {0 , 0 ,0});
+	//shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
+	//shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
+	//shader.SetUniform3fv("camera.origin", {0 , 0 , 0});
+	shader.SetUniform3fv("camera.horizontal", camera.GetRight());
+	shader.SetUniform3fv("camera.vertical", camera.GetUp());
+	shader.SetUniform3fv("camera.origin", camera.GetPosition());
+
+
+	//==
+	shader.SetUniform3fv("eye", camera.GetEye());
+	shader.SetUniformMat4f("cameraRotate", camera.GetCameraRotate());
+	
+
+	//==
+	shader.SetUniform1i("triangles", 0);
+	shader.SetUniform1i("bvh", 1);
+
 	shader.SetUniform1i("triangleCount", trianglesData.size());
+	shader.SetUniform1i("BVHCount", BVHData.size());
 
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
@@ -124,7 +141,37 @@ void Scene::initTrianglesData()
 
 		trianglesData.insert(trianglesData.end(), data.begin(), data.end());	//把每一个数据存入数据库
 	}
+	std::cout << "三角形共" << trianglesData.size() << "个" << std::endl;
 
 	// 绑定缓冲区
-	transmitToBuffer(tbo, texBuffer, trianglesData);
+	//transmitToBuffer(tbo, texBuffer, trianglesData);
+	myBindBuffer(tbo, texBuffer, trianglesData, 0);
+}
+
+void Scene::initBVHData()
+{
+	int n = trianglesData.size();
+	BVHNode tNode;
+	tNode.left = 255;
+	tNode.right = 128;
+	tNode.n = 30;
+	tNode.AA = { 1,1,0 };
+	tNode.BB = { 0,1,0 };
+
+	std::vector<BVHNode> nodes{ tNode };
+
+	BuildBVH(trianglesData, nodes, 0, n - 1, 8);
+	std::cout << "BVH共" << nodes.size() << "个节点" << std::endl;
+
+	int nNode = nodes.size();
+	if (!BVHData.empty())
+		BVHData.clear();
+	for (int i = 0; i < nNode; i++)
+	{
+		//std::cout << i << std::endl;
+		BVHData.push_back(encodeBVH(nodes[i]));
+	}
+
+	// 绑定缓冲区
+	myBindBuffer(bvh_tbo, bvh_texBuffer, BVHData, 1);
 }
