@@ -45,20 +45,20 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 32;
-const unsigned int Y_SEGMENTS = 32;
+const unsigned int X_SEGMENTS = 16;
+const unsigned int Y_SEGMENTS = 16;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
-    :point0(v0),point1(v1), point2(v2)
+    :p1(v0),p2(v1), p3(v2)
 {
-    material.normal = glm::normalize(glm::cross(point0 - point1, point0 - point2));
+    material.normal = glm::normalize(glm::cross(p1 - p2, p1 - p3));
     material.color = color;
 
     float ver[] = {
-        point0.x, point0.y, point0.z,
-        point1.x, point1.y, point1.z,
-        point2.x, point2.y, point2.z,
+        p1.x, p1.y, p1.z,
+        p2.x, p2.y, p2.z,
+        p3.x, p3.y, p3.z,
     };
 
     glGenBuffers(1, &vb);
@@ -80,67 +80,13 @@ Triangle::~Triangle()
     glDeleteVertexArrays(1, &va);
 }
 
-HitResult Triangle::intersect(Ray ray)
-{
-    HitResult res;
-
-    // 光线 O + tD
-    glm::vec3 O = ray.start;
-    glm::vec3 D = ray.dir;
-    
-    glm::vec3 N = material.normal;
-    if (glm::dot(N, D) < 0.00001f) N = -N;
-    
-    // 平行与三角形平面
-    if (fabs(glm::dot(N, D)) < 0.0001f) return res;
-
-    float t = (glm::dot(N, point0) - glm::dot(N, O)) / glm::dot(N, D);
-    
-    // 交点在光源后
-    if (t < 0.0001f) return res;
-
-    // 交点
-    glm::vec3 P = O + t * D;
-    double distance = glm::distance(O, P);
-    
-    res.isHit = true;
-    res.distance = distance;
-    res.hitPoint = P;
-    res.material.normal = N;
-    res.pos = O + t * D;
-
-    return res;
-}
-
-void Triangle::Draw(Shader shader)
-{
-    shader.Bind();
-    shader.SetUniform3fv("color", material.color);
-    glBindVertexArray(va);
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-}
-
-
-// 返回最近的交点
-HitResult shoot(std::vector<shape*>& shapes, Ray ray)
-{
-    HitResult res, tmp;
-    res.distance = DBL_MAX;
-
-    for (auto& shape : shapes)
-    {
-        tmp = shape->intersect(ray);
-        if (tmp.isHit && tmp.distance < res.distance)
-            res = tmp;
-    }
-    
-    return res;
-}
 
 void Sphere::encodedData()
 {
     if (!triangles.empty())
         triangles.clear();
+
+    /*
     for (unsigned int y = 0; y < Y_SEGMENTS; y++)
     {
         for (unsigned int x = 0; x < X_SEGMENTS; x++)
@@ -182,6 +128,42 @@ void Sphere::encodedData()
             triangles.push_back(tri2);
         }
     }
+    */
+
+    for (int i = 2; i < indices.size(); i++)
+    {
+        GLuint Pos0;
+        GLuint Pos1;
+        GLuint Pos2;
+        if (i % 2)  // 奇数
+        {
+            Pos0 = indices[i - 2];
+            Pos1 = indices[i - 1];
+            Pos2 = indices[i];
+        }
+        else
+        {
+            Pos0 = indices[i - 1];
+            Pos1 = indices[i - 2];
+            Pos2 = indices[i];
+        }
+            
+        Triangle_encoded t;
+        t.p1 = positions[Pos0];
+        t.p2 = positions[Pos1];
+        t.p3 = positions[Pos2];
+
+        t.n1 = normals[Pos0];
+        t.n2 = normals[Pos1];
+        t.n3 = normals[Pos2];
+
+        t.emissive = material.emissive;
+        t.baseColor = material.color;
+        t.param1 = glm::vec3(material.ao, material.roughness, material.metallic);
+
+        triangles.push_back(t);       
+    }
+
 }
 
 Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
@@ -194,6 +176,8 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
     glGenBuffers(1, &EBO);
 
     // 画球
+
+    /*
     for (unsigned int x = 0; x <= X_SEGMENTS; x++)
     {
         for (unsigned int y = 0; y <= Y_SEGMENTS; y++)
@@ -206,6 +190,8 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
 
             positions.push_back(R * glm::vec3(xPos, yPos, zPos) + center);
             //positions.push_back(glm::vec3(xPos, yPos, zPos));
+
+            std::cout << "(" << xPos << "," << yPos << "," << zPos << ")" << std::endl;
 
             uv.push_back(glm::vec2(xSegment, ySegment));
             normals.push_back(glm::vec3(xPos, yPos, zPos));
@@ -254,7 +240,65 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
             data.push_back(uv[i].y);
         }
     }
+    */
+    for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
+    {
+        for (unsigned int y = 0; y <= Y_SEGMENTS; ++y)
+        {
+            float xSegment = (float)x / (float)X_SEGMENTS;
+            float ySegment = (float)y / (float)Y_SEGMENTS;
+            float xPos = std::cos(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
+            float yPos = std::cos(ySegment * PI);
+            float zPos = std::sin(xSegment * 2.0f * PI) * std::sin(ySegment * PI);
 
+            positions.push_back(R * glm::vec3(xPos, yPos, zPos) + center);
+            //positions.push_back(glm::vec3(xPos, yPos, zPos));
+            uv.push_back(glm::vec2(xSegment, ySegment));
+            normals.push_back(glm::vec3(xPos, yPos, zPos));
+        }
+    }
+
+    bool oddRow = false;
+    for (unsigned int y = 0; y < Y_SEGMENTS; ++y)
+    {
+        if (!oddRow) // even rows: y == 0, y == 2; and so on
+        {
+            for (unsigned int x = 0; x <= X_SEGMENTS; ++x)
+            {
+                indices.push_back(y * (X_SEGMENTS + 1) + x);
+                indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+            }
+        }
+        else
+        {
+            for (int x = X_SEGMENTS; x >= 0; --x)
+            {
+                indices.push_back((y + 1) * (X_SEGMENTS + 1) + x);
+                indices.push_back(y * (X_SEGMENTS + 1) + x);
+            }
+        }
+        oddRow = !oddRow;
+    }
+    unsigned int indexCount = static_cast<unsigned int>(indices.size());
+
+    for (unsigned int i = 0; i < positions.size(); ++i)
+    {
+        data.push_back(positions[i].x);
+        data.push_back(positions[i].y);
+        data.push_back(positions[i].z);
+        if (normals.size() > 0)
+        {
+            data.push_back(normals[i].x);
+            data.push_back(normals[i].y);
+            data.push_back(normals[i].z);
+        }
+
+        if (uv.size() > 0)
+        {
+            data.push_back(uv[i].x);
+            data.push_back(uv[i].y);
+        }
+    }
     // 三角形数据传入
     encodedData();
 
@@ -284,63 +328,11 @@ Sphere::~Sphere()
     glDeleteBuffers(1, &EBO);
 }
 
-void Sphere::Draw(Shader& shader)
-{
-    shader.Bind();
-
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
-}
 
 void Sphere::setEmissive(glm::vec3 emissive)
 {
     material.emissive = emissive;
     encodedData();
-}
-
-HitResult Sphere::intersect(Ray ray)
-{
-    HitResult res;
-
-    glm::vec3 S = ray.start;
-    glm::vec3 d = ray.dir;
-
-    float OS = glm::distance(S, center);        //光源->圆心
-    float SH = dot(center - S, d);              //沿dir方向
-    float OH = sqrt(pow(OS, 2) - pow(SH, 2));   //OH 垂直于 SH
-
-    // 不相交
-    if (OH > R) 
-        return res;
-
-
-    float PH = sqrt(pow(R, 2) - pow(OH, 2));    //P为交点
-
-    float t1 = SH - PH;
-    float t2 = SH + PH;
-    
-    // 防止自交
-    if (abs(t1) < 0.001f || abs(t2) < 0.001f)
-        return res;
-
-    float t = t1 < 0 ? t2 : t1;
-    
-    glm::vec3 P = S + t * d;
-
-    res.isHit = true;
-    res.distance = t;
-    res.hitPoint = P;
-    res.material = material;
-    res.material.normal = glm::normalize(P - center);
-
-    return res;
-}
-
-Ray::Ray(Light light)
-{
-    // TODO: set ray start and direction
-    this->start = light.Pos;
-    this->dir = glm::normalize(randomVec3());
 }
 
 
@@ -355,22 +347,28 @@ std::vector<Triangle_encoded> Triangle::encodeData(std::vector<Triangle>& triang
         Material& m = t.material;
 
         // vertex position
-        res[i].p1 = t.point0;
-        res[i].p2 = t.point1;
-        res[i].p3 = t.point2;
+        res[i].p1 = t.p1;
+        res[i].p2 = t.p2;
+        res[i].p3 = t.p3;
 
         // normal
-        res[i].n1 = t.normal0;
-        res[i].n2 = t.normal1;
-        res[i].n3 = t.normal2;
+        res[i].n1 = t.n1;
+        res[i].n2 = t.n2;
+        res[i].n3 = t.n3;
 
         // material
         res[i].emissive = m.emissive;
-        if (m.emissive == glm::vec3(1.0))
-            std::cout << "shape light" << std::endl;
         res[i].baseColor = m.color;
         res[i].param1 = glm::vec3(m.ao, m.roughness, m.metallic);
     }
 
     return res;
+}
+
+void Sphere::Draw(Shader& shader) 
+{
+    unsigned int indexCount = static_cast<unsigned int>(indices.size());
+    shader.Bind();
+    glBindVertexArray(VAO);
+    glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
 }

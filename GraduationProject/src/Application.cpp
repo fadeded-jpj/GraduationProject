@@ -59,16 +59,16 @@ int main()
     //=====================================================
     Scene myScene;
 
-    Sphere textSphere1({ 0,0,-3 }, 1, { 1.0, 1.0, 1.0 });
-    Sphere textSphere2({ 1.2, 1,-3 }, 0.5, { 0.1, 0.7, 0.1 });
-    Sphere textSphere3( {-1.2, 1, -3}, 0.5, { 0.1, 0.1, 0.7 });
+    Sphere textSphere1({ 0,0,-3 }, 1, { 1.0, 0.1, 0.2 });
+    Sphere textSphere2({ 1.3, 1,-3 }, 0.5, { 0.0, 1.0, 0.0 });
+    Sphere textSphere3( {-1.3, 1, -3}, 0.5, { 0.0, 0.0, 1.0 });
     Sphere lightSphere({ 0, 0, 3 }, 1, { 1,1,1 });
-    textSphere1.setEmissive(glm::vec3(1));
+    textSphere1.setEmissive(glm::vec3(0.5));
     lightSphere.setEmissive(glm::vec3(1.0));
 
     myScene.push(&textSphere1);
-    //myScene.push(&textSphere2);
-    //myScene.push(&textSphere3);
+    myScene.push(&textSphere2);
+    myScene.push(&textSphere3);
     //myScene.push(&lightSphere);
 
 
@@ -84,9 +84,11 @@ int main()
     // ±³ÃæÌÞ³ý
     //glEnable(GL_CULL_FACE);
     //glCullFace(GL_FRONT);
+    //glCullFace(GL_BACK);
 
     // render loop
     // -----------
+
 
 
     while (!glfwWindowShouldClose(window))
@@ -114,11 +116,14 @@ int main()
         shader.SetUniform1i("height", SCR_HEIGHT);
 
         myScene.Render(shader);
-        /*basic.Bind();
+
+        /*
+        basic.Bind();
         basic.SetUniformMat4f("projection", projection);
         basic.SetUniformMat4f("view", view);
-        textSphere1.Draw(basic);*/
-
+        textSphere1.Draw(basic);
+        */
+        
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
         glfwSwapBuffers(window);

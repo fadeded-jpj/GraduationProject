@@ -34,6 +34,12 @@ public:
 	void push(Light light);
 	
 	void Render(Shader& shader);
+
+	float HitAABB(Ray ray);
+	HitResult HitArray(Ray ray, int l, int r);
+	HitResult HitTriangle(Triangle_encoded t, Ray ray);
+	HitResult HitBVH(Ray ray);
+
 private:
 	void initTrianglesData();
 	void initBVHData();

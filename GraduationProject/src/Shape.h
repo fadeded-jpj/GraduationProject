@@ -6,6 +6,7 @@
 #include "Shader.h"
 #include "encoded/Triangle.h"
 
+
 struct Light
 {
 	glm::vec3 Pos;
@@ -57,8 +58,8 @@ public:
 struct Triangle : public shape
 {
 public:
-	glm::vec3 point0, point1, point2;
-	glm::vec3 normal0, normal1, normal2;
+	glm::vec3 p1, p2, p3;
+	glm::vec3 n1, n2, n3;
 	Material material;
 
 private:
@@ -68,8 +69,8 @@ public:
 	Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color = {1.0f, 1.0f, 1.0f});
 	~Triangle();
 	
-	HitResult intersect(Ray ray);
-	void Draw(Shader shader);
+	HitResult intersect(Ray ray) { return HitResult(); }
+	void Draw(Shader shader) {}
 
 	std::vector<Triangle_encoded> encodeData(std::vector<Triangle>& triangle);
 };
@@ -101,10 +102,21 @@ public:
 	~Sphere();
 	
 	void Draw(Shader& shader);
-	HitResult intersect(Ray ray);
+	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive);
 
 	std::vector<Triangle_encoded> getCodedData() { return triangles; }
 };
 
-HitResult shoot(std::vector<shape*>& shapes, Ray ray);
+class Square : public shape
+{
+private:
+	std::vector<glm::vec3> points;
+	std::vector<glm::vec3> normals;
+	std::vector<unsigned int> indices;
+
+	Material materal;
+public:
+	Square();
+	Square(std::vector<glm::vec3> points);
+};

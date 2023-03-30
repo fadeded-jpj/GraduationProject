@@ -93,8 +93,8 @@ uniform int height;
 // ============= funcion ==================
 //=========================== Random =======================
 uint seed = uint(
-	uint((pix.x * 0.5 + 0.5) * width) * uint(1973) +
-	uint((pix.y * 0.5 + 0.5) * height) * uint(9277) +
+	uint(screenCoord.x * width) * uint(1973) +
+	uint(screenCoord.y * height) * uint(9277) +
 	uint(frameCount) * uint(26699)) | uint(1);
 
 uint wang_hash(inout uint seed) {
@@ -158,7 +158,7 @@ BVHNode getBVHNode(int i)
 }
 
 // 与AABB求交
-float HitAABB(Ray r, vec3 AA, vec3 BB)
+bool HitAABB(Ray r, vec3 AA, vec3 BB)
 {
 	vec3 invDir = 1.0 / r.dir;
 	
@@ -171,7 +171,7 @@ float HitAABB(Ray r, vec3 AA, vec3 BB)
 	float tenter = max(tmin.x, max(tmin.y, tmin.z));
 	float texit = min(tmax.x, min(tmax.y, tmax.z));
 
-	return (texit >= tenter) ? ((tenter > 0f) ? tenter : texit) : -1f;
+	return tenter < texit && texit >= 0;
 }
 
 
@@ -209,7 +209,7 @@ Material getMaterial(int i) {
 }
 
 // 光线和三角形相交
-HitResult TriangleIntersect(Triangle t, Ray ray)
+HitResult HitTriangle(Triangle t, Ray ray)
 {
 	//bool isHit;
 	//bool isInside;
@@ -232,6 +232,7 @@ HitResult TriangleIntersect(Triangle t, Ray ray)
 	vec3 S = ray.start;
 	vec3 D = ray.dir;
 	vec3 N = normalize(cross(p2 - p1, p3 - p1));
+	//vec3 N = normalize(t.n1 + t.n2 + t.n3);
 
 	// 光线从背面达到物体
 	if (dot(N, D) > 0.0f) {
@@ -240,9 +241,10 @@ HitResult TriangleIntersect(Triangle t, Ray ray)
 	}
 
 	// 平行三角形
-	if (abs(dot(N, D)) < 0.00005f)
+	if (abs(dot(N, D)) < 0.00001f)
 		return res;
 
+	// 求交点
 	float T = (dot(N, p1) - dot(S, N)) / dot(D, N);
 	if (T < 0.0005f) return res;
 
@@ -263,6 +265,7 @@ HitResult TriangleIntersect(Triangle t, Ray ray)
 		res.distance = T;
 		res.HitPoint = P;
 		res.viewDir = D;
+		res.normal = N;
 
 		//法线插值
 		float alpha = (-(P.x - p2.x) * (p3.y - p2.y) + (P.y - p2.y) * (p3.x - p2.x)) / (-(p1.x - p2.x - 0.00005) * (p3.y - p2.y + 0.00005) + (p1.y - p2.y + 0.00005) * (p3.x - p2.x + 0.00005));
@@ -286,7 +289,7 @@ HitResult HitArray(Ray ray, int left, int right)
 	{
 		Triangle t = getTriangle(i);
 
-		HitResult tmp = TriangleIntersect(t, ray);
+		HitResult tmp = HitTriangle(t, ray);
 		if (tmp.isHit && tmp.distance < res.distance) {
 			res = tmp;
 			res.material = getMaterial(i);
@@ -304,7 +307,7 @@ HitResult HitBVH(Ray ray)
 	res.distance = INF;
 
 	//实现栈
-	int stack[256];
+	int stack[512];
 	int sp = 0;
 
 	stack[sp++] = 1;
@@ -326,8 +329,8 @@ HitResult HitBVH(Ray ray)
 		}
 
 		// 非叶子节点
-		float dLeft = INF;	// 左孩子距离
-		float dRight = INF;	// 右孩子距离
+		bool dLeft = false;	// 左孩子距离
+		bool dRight = false;	// 右孩子距离
 
 		if (node.left > 0)
 		{
@@ -340,24 +343,26 @@ HitResult HitBVH(Ray ray)
 			dRight = HitAABB(ray, rightNode.AA, rightNode.BB);
 		}
 
-		if (dLeft > 0 && dRight > 0)
+		if (dLeft  && dRight )
 		{
-			if (dLeft < dRight)
-			{
-				stack[sp++] = node.right;
-				stack[sp++] = node.left;
-			}
-			else
-			{
-				stack[sp++] = node.left;
-				stack[sp++] = node.right;
-			}
+			//if (dLeft < dRight)
+			//{
+			//	stack[sp++] = node.right;
+			//	stack[sp++] = node.left;
+			//}
+			//else
+			//{
+			//	stack[sp++] = node.left;
+			//	stack[sp++] = node.right;
+			//}
+			stack[sp++] = node.right;
+			stack[sp++] = node.left;
 		}
-		else if (dLeft > 0)
+		else if (dLeft)
 		{
 			stack[sp++] = node.left;
 		}
-		else if (dRight > 0)
+		else if (dRight)
 		{
 			stack[sp++] = node.right;
 		}
@@ -365,7 +370,7 @@ HitResult HitBVH(Ray ray)
 	return res;
 }
 
-vec3 pathTracing(HitResult hit, int maxBounce) {
+vec3 rayTracing(HitResult hit, int maxBounce) {
 	vec3 Lo = vec3(0);
 	vec3 history = vec3(1);
 
@@ -379,7 +384,9 @@ vec3 pathTracing(HitResult hit, int maxBounce) {
 		ray.start = hit.HitPoint;
 		ray.dir = wi;
 
-		HitResult newHit = HitBVH(ray);
+		//HitResult newHit = HitBVH(ray);
+		HitResult newHit = HitArray(ray, 0, triangleCount-1);
+
 
 		if (!newHit.isHit)
 			break;
@@ -441,42 +448,78 @@ void main()
 	float u = screenCoord.x;
 	float v = screenCoord.y;
 	
-	//Ray ray = CameraGetRay(camera, screenCoord);
-	Ray ray;
-	ray.start = vec3(0, 0, 4);
-	ray.dir = normalize(vec3(pix.xy, 2) - ray.start);
+	Ray ray = CameraGetRay(camera, screenCoord);
+
 
 	//===========================
 	// TODO : fix BVH bug
-	//	BVH 构建 or BVH求交
+	//	BVH 传输？
 	//===========================
 	
 
-	HitResult res = HitBVH(ray);
-	vec3 color;
-	
-	if (res.isHit) 
-	{
-		color = res.material.baseColor;
-	}
-	else
-		color = vec3(0);
-	
-	FragColor = vec4(color, 1);
+	//HitResult res = HitBVH(ray);
+	//vec3 color;
+	//
+	//if (res.isHit) 
+	//{
+	//	color = res.material.baseColor;
+	//}
+	//else
+	//	color = vec3(0);
+	//
+	//FragColor = vec4(color, 1);
 
+	
+	//BVHNode node = getBVHNode(1);
+	//float r = HitAABB(ray, node.AA, node.BB);
+	//HitResult res = HitBVH(ray);
+	//vec3 color = vec3(0);
+	//if (res.isHit && r > 0)
+	//	color = vec3(1, 0, 0);
+	//else if (r > 0)
+	//	color = vec3(0, 1, 0);
+	//else if(res.isHit)
+	//	color = res.material.baseColor;
+	
+	HitResult res = HitArray(ray, 0, triangleCount - 1);
+	//HitResult res = HitBVH(ray);
 
-	/*
-	for (int i = 0; i < BVHCount; i++)
-	{
-		BVHNode node = getBVHNode(i);
-		if (node.n > 0)
+	vec3 color = vec3(0);
+
+	for (int i = 0; i < 5; i++) {
+		if (res.isHit)
 		{
-			int L = node.index;
-			int R = node.index + node.n - 1;
-			HitResult res = HitArray(ray, L, R);
-			if (res.isHit)
-				FragColor = vec4(res.material.baseColor, 1);
+			color += rayTracing(res, 3);
 		}
 	}
-	*/
+	color /= 5;
+	
+	//vec3 color;
+	//for (int i = 0; i < BVHCount; i++)
+	//{
+	//	BVHNode node = getBVHNode(i);
+	//	if (node.n > 0)
+	//	{
+	//		int L = node.index;
+	//		int  R = node.index + node.n - 1;
+	//		HitResult res = HitArray(ray, L, R);
+	//		if (res.isHit)
+	//			color = res.material.baseColor;
+	//	}
+	//}
+
+	//BVHNode node = getBVHNode(1);
+	//BVHNode left = getBVHNode(node.left);
+	//BVHNode right = getBVHNode(node.right);
+
+	//bool r1 = HitAABB(ray, left.AA, left.BB);
+	//bool r2 = HitAABB(ray, right.AA, right.BB);
+
+	//vec3 color;
+	//if (r1) color = vec3(1, 0, 0);
+	//if (r2) color = vec3(0, 1, 0);
+	//if (r1 && r2 ) color = vec3(1, 1, 0);
+
+
+	FragColor = vec4(color, 1);
 }

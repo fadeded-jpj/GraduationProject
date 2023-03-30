@@ -14,28 +14,30 @@ int BuildBVH(std::vector<Triangle_encoded>& triangles, std::vector<BVHNode>& nod
     
     nodes.push_back(BVHNode());
     int id = nodes.size() - 1;
-    nodes[id].AA = glm::vec3(_MAX_);
-    nodes[id].BB = glm::vec3(_MAX_ * -1.0f);
+    nodes[id].AA = glm::vec3(114514.0f);
+    nodes[id].BB = glm::vec3(-114514.0f);
     nodes[id].index = nodes[id].left = nodes[id].right = nodes[id].n = 0;
 
     for (int i = left; i <= right; i++)
     {
         // AA
-        float minX = std::min({ triangles[i].p1.x, triangles[i].p2.x, triangles[i].p3.x });
-        float minY = std::min({ triangles[i].p1.y, triangles[i].p2.y, triangles[i].p3.y });
-        float minZ = std::min({ triangles[i].p1.z, triangles[i].p2.z, triangles[i].p3.z });
-        nodes[id].AA.x = std::min(nodes[id].AA.x, minX);
-        nodes[id].AA.y = std::min(nodes[id].AA.y, minY);
-        nodes[id].AA.z = std::min(nodes[id].AA.z, minZ);
+        float minX = min(triangles[i].p1.x, min(triangles[i].p2.x, triangles[i].p3.x));
+        float minY = min(triangles[i].p1.y, min(triangles[i].p2.y, triangles[i].p3.y));
+        float minZ = min(triangles[i].p1.z, min(triangles[i].p2.z, triangles[i].p3.z));
+        nodes[id].AA.x = min(nodes[id].AA.x, minX);
+        nodes[id].AA.y = min(nodes[id].AA.y, minY);
+        nodes[id].AA.z = min(nodes[id].AA.z, minZ);
 
         // BB
-        float maxX = std::max({ triangles[i].p1.x, triangles[i].p2.x, triangles[i].p3.x });
-        float maxY = std::max({ triangles[i].p1.y, triangles[i].p2.y, triangles[i].p3.y });
-        float maxZ = std::max({ triangles[i].p1.z, triangles[i].p2.z, triangles[i].p3.z });
-        nodes[id].BB.x = std::max(nodes[id].BB.x, maxX);
-        nodes[id].BB.y = std::max(nodes[id].BB.y, maxY);
-        nodes[id].BB.z = std::max(nodes[id].BB.z, maxZ);
+        float maxX = max(triangles[i].p1.x, max(triangles[i].p2.x, triangles[i].p3.x));
+        float maxY = max(triangles[i].p1.y, max(triangles[i].p2.y, triangles[i].p3.y));
+        float maxZ = max(triangles[i].p1.z, max(triangles[i].p2.z, triangles[i].p3.z));
+        nodes[id].BB.x = max(nodes[id].BB.x, maxX);
+        nodes[id].BB.y = max(nodes[id].BB.y, maxY);
+        nodes[id].BB.z = max(nodes[id].BB.z, maxZ);
     }
+
+    //std::cout << "right = " << right << "   left = " << left << "  n = " << n << std::endl;
 
     if ((right - left + 1) <= n)
     {
@@ -51,19 +53,19 @@ int BuildBVH(std::vector<Triangle_encoded>& triangles, std::vector<BVHNode>& nod
     float lenZ = nodes[id].BB.z - nodes[id].AA.z;
 
     // X
-    if (lenX > lenY && lenX > lenZ)
+    if (lenX >= lenY && lenX >= lenZ)
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
                 return GetTriangleCenter(t1).x < GetTriangleCenter(t2).x;
             });
     // Y
-    else if (lenY > lenX && lenY > lenZ)
+    if (lenY >= lenX && lenY >= lenZ)
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
                 return GetTriangleCenter(t1).y < GetTriangleCenter(t2).y;
             });
     // Z
-    else
+    if(lenZ >= lenX && lenZ >= lenY)
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
                 return GetTriangleCenter(t1).z < GetTriangleCenter(t2).z;
@@ -210,7 +212,7 @@ BVHNode_encode encodeBVH(const BVHNode& bvh)
     res.AA = bvh.AA;
     res.BB = bvh.BB;
 
-    if (true) {
+    if (false) {
         myPrint(res.children, "childs");
         myPrint(res.information, "info");
         myPrint(res.AA, "AA");
