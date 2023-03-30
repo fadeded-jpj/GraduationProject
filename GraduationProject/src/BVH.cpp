@@ -212,7 +212,7 @@ BVHNode_encode encodeBVH(const BVHNode& bvh)
     res.AA = bvh.AA;
     res.BB = bvh.BB;
 
-    if (false) {
+    if (true) {
         myPrint(res.children, "childs");
         myPrint(res.information, "info");
         myPrint(res.AA, "AA");

@@ -19,7 +19,7 @@ int main()
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
@@ -67,8 +67,8 @@ int main()
     lightSphere.setEmissive(glm::vec3(1.0));
 
     myScene.push(&textSphere1);
-    myScene.push(&textSphere2);
-    myScene.push(&textSphere3);
+    //myScene.push(&textSphere2);
+    //myScene.push(&textSphere3);
     //myScene.push(&lightSphere);
 
 

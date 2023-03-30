@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 16;
-const unsigned int Y_SEGMENTS = 16;
+const unsigned int X_SEGMENTS = 8;
+const unsigned int Y_SEGMENTS = 8;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)

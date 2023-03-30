@@ -20,7 +20,6 @@ public:
 	glm::vec3 dir;
 public:
 	Ray(const glm::vec3 start, const glm::vec3 dir) :start(start), dir(glm::normalize(dir)) {}
-	Ray(Light light);
 };
 
 

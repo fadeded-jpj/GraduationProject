@@ -100,26 +100,26 @@ void Scene::push(Light light)
 void Scene::Render(Shader& shader)
 {
 	if (!inited) {
-		initTrianglesData();
+		//initTrianglesData();
 
-		//std::vector<Triangle_encoded> t(20);
-		//for (int i = 0; i < 20; i++) {
-		//	t[i].p2 = glm::vec3(-1 + i/3.0f, -1 + i/4.0f, -5);
-		//	t[i].p1 = glm::vec3(-1 + i/3.0f, -2 + i/4.0f, -5);
-		//	t[i].p3 = glm::vec3(-2 + i/3.0f, -1 + i/4.0f, -5);
+		std::vector<Triangle_encoded> t(5);
+		for (int i = 0; i < 5; i++) {
+			t[i].p2 = glm::vec3(-1 + i/2.0f, -1 + i/2.0f, -5);
+			t[i].p1 = glm::vec3(-1 + i/2.0f, -2 + i/2.0f, -5);
+			t[i].p3 = glm::vec3(-2 + i/2.0f, -1 + i/2.0f, -5);
 
-		//	t[i].n1 = glm::vec3(0, 0, 1);
-		//	t[i].n2 = glm::vec3(0, 0, 1);
-		//	t[i].n3 = glm::vec3(0, 0, 1);
+			t[i].n1 = glm::vec3(0, 0, 1);
+			t[i].n2 = glm::vec3(0, 0, 1);
+			t[i].n3 = glm::vec3(0, 0, 1);
 
-		//	t[i].baseColor = glm::vec3(1, 1, 1);
-		//	t[i].emissive = glm::vec3(1, 1, 1);
-		//	t[i].param1 = glm::vec3(0.4, 0.5, 1);
+			t[i].baseColor = glm::vec3(1, 1, 1);
+			t[i].emissive = glm::vec3(1, 1, 1);
+			t[i].param1 = glm::vec3(0.4, 0.5, 1);
 
-		//	//trianglesData.clear();
-		//	trianglesData.push_back(t[i]);
-		//}
-		//myBindBuffer(tbo, texBuffer, trianglesData, 0);
+			//trianglesData.clear();
+			trianglesData.push_back(t[i]);
+		}
+		myBindBuffer(tbo, texBuffer, trianglesData, 0);
 
 		initBVHData();
 		inited = true;
@@ -208,6 +208,7 @@ void Scene::initBVHData()
 
 	std::vector<BVHNode> nodes{ tNode };
 
+	std::cout << "三角形共" << trianglesData.size() << "个" << std::endl;
 	BuildBVH(trianglesData, nodes, 0, n - 1, 2);
 	std::cout << "BVH共" << nodes.size() << "个节点" << std::endl;
 
@@ -216,7 +217,7 @@ void Scene::initBVHData()
 		BVHData.clear();
 	for (int i = 0; i < nNode; i++)
 	{
-		//std::cout << i << std::endl;
+		std::cout << i << std::endl;
 		BVHData.push_back(encodeBVH(nodes[i]));
 	}
 

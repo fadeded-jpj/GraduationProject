@@ -1,5 +1,5 @@
 #shader vertex
-#version 430 core
+#version 330 core
 layout(location = 0) in vec3 aPos;
 
 out vec2 screenCoord;
@@ -19,7 +19,7 @@ void main()
 
 
 #shader fragment
-#version 430 core
+#version 330 core
 out vec4 FragColor;
 
 in vec2 screenCoord;
@@ -307,7 +307,7 @@ HitResult HitBVH(Ray ray)
 	res.distance = INF;
 
 	// µœ÷’ª
-	int stack[512];
+	int stack[256];
 	int sp = 0;
 
 	stack[sp++] = 1;
@@ -456,18 +456,26 @@ void main()
 	//	BVH ¥´ ‰£ø
 	//===========================
 	
+	//int i = 1;
+	//HitResult res = HitArray(ray, i, i);
 
-	//HitResult res = HitBVH(ray);
-	//vec3 color;
-	//
-	//if (res.isHit) 
-	//{
-	//	color = res.material.baseColor;
-	//}
-	//else
-	//	color = vec3(0);
-	//
-	//FragColor = vec4(color, 1);
+	BVHNode node = getBVHNode(5);
+	
+	HitResult res = HitBVH(ray);
+	bool r = HitAABB(ray, node.AA, node.BB);
+	vec3 color;
+	
+	if (res.isHit) 
+	{
+		color = vec3(1);
+	}
+	else
+	{
+		color = vec3(0.5);
+	}
+
+
+	FragColor = vec4(color, 1);
 
 	
 	//BVHNode node = getBVHNode(1);
@@ -481,19 +489,23 @@ void main()
 	//else if(res.isHit)
 	//	color = res.material.baseColor;
 	
-	HitResult res = HitArray(ray, 0, triangleCount - 1);
+
+
+	//HitResult res = HitArray(ray, 0, triangleCount - 1);
 	//HitResult res = HitBVH(ray);
 
-	vec3 color = vec3(0);
+	//vec3 color = vec3(0);
 
-	for (int i = 0; i < 5; i++) {
-		if (res.isHit)
-		{
-			color += rayTracing(res, 3);
-		}
-	}
-	color /= 5;
+	//for (int i = 0; i < 5; i++) {
+	//	if (res.isHit)
+	//	{
+	//		color += rayTracing(res, 3);
+	//	}
+	//}
+	//color /= 5;
 	
+
+
 	//vec3 color;
 	//for (int i = 0; i < BVHCount; i++)
 	//{
@@ -521,5 +533,5 @@ void main()
 	//if (r1 && r2 ) color = vec3(1, 1, 0);
 
 
-	FragColor = vec4(color, 1);
+	//FragColor = vec4(color, 1);
 }
