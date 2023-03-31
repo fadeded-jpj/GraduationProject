@@ -158,20 +158,33 @@ BVHNode getBVHNode(int i)
 }
 
 // 与AABB求交
-bool HitAABB(Ray r, vec3 AA, vec3 BB)
+float HitAABB(Ray r, vec3 AA, vec3 BB)
 {
-	vec3 invDir = 1.0 / r.dir;
-	
-	vec3 rayIn = (AA - r.start) * invDir;
-	vec3 rayOut = (BB - r.start) * invDir;
+	//vec3 invDir = 1.0 / r.dir;
+	//
+	//vec3 rayIn = (AA - r.start) * invDir;
+	//vec3 rayOut = (BB - r.start) * invDir;
 
-	vec3 tmax = max(rayIn, rayOut);
-	vec3 tmin = min(rayIn, rayOut);
+	//vec3 tmax = max(rayIn, rayOut);
+	//vec3 tmin = min(rayIn, rayOut);
 
-	float tenter = max(tmin.x, max(tmin.y, tmin.z));
-	float texit = min(tmax.x, min(tmax.y, tmax.z));
+	//float tenter = max(tmin.x, max(tmin.y, tmin.z));
+	//float texit = min(tmax.x, min(tmax.y, tmax.z));
 
-	return tenter < texit && texit >= 0;
+	//return tenter < texit && texit >= 0;
+
+	vec3 invdir = 1.0 / r.dir;
+
+	vec3 f = (BB - r.start) * invdir;
+	vec3 n = (AA - r.start) * invdir;
+
+	vec3 tmax = max(f, n);
+	vec3 tmin = min(f, n);
+
+	float t1 = min(tmax.x, min(tmax.y, tmax.z));
+	float t0 = max(tmin.x, max(tmin.y, tmin.z));
+
+	return (t1 >= t0) ? ((t0 > 0.0) ? (t0) : (t1)) : (-1);
 }
 
 
@@ -329,8 +342,8 @@ HitResult HitBVH(Ray ray)
 		}
 
 		// 非叶子节点
-		bool dLeft = false;	// 左孩子距离
-		bool dRight = false;	// 右孩子距离
+		float dLeft = INF;// 左孩子距离
+		float dRight = INF;	// 右孩子距离
 
 		if (node.left > 0)
 		{
@@ -343,7 +356,7 @@ HitResult HitBVH(Ray ray)
 			dRight = HitAABB(ray, rightNode.AA, rightNode.BB);
 		}
 
-		if (dLeft  && dRight )
+		if (dLeft > 0 && dRight > 0)
 		{
 			//if (dLeft < dRight)
 			//{
@@ -358,11 +371,11 @@ HitResult HitBVH(Ray ray)
 			stack[sp++] = node.right;
 			stack[sp++] = node.left;
 		}
-		else if (dLeft)
+		else if (dLeft > 0)
 		{
 			stack[sp++] = node.left;
 		}
-		else if (dRight)
+		else if (dRight > 0)
 		{
 			stack[sp++] = node.right;
 		}
@@ -406,32 +419,6 @@ vec3 rayTracing(HitResult hit, int maxBounce) {
 	return Lo;
 }
 
-//vec3 WorldTrace(Ray ray, int depth)
-//{
-//	vec3 current_attenuation = vec3(1.0, 1.0, 1.0);
-//	Ray current_ray = ray;
-//
-//	while (depth > 0)
-//	{
-//		depth--;
-//		HitResult hit = HitBVH(current_ray);
-//		if (hit.isHit)
-//		{
-//			vec3 attenuation;
-//			Ray scatter_ray;
-//
-//			current_attenuation *= attenuation;
-//			current_ray = scatter_ray;
-//		}
-//		else
-//		{
-//			return current_attenuation;
-//		}
-//	}
-//
-//	return vec3(0.0, 0.0, 0.0);
-//}
-
 Ray CameraGetRay(Camera camera, vec2 offset)
 {
 	Ray ray;
@@ -450,88 +437,29 @@ void main()
 	
 	Ray ray = CameraGetRay(camera, screenCoord);
 
-
 	//===========================
 	// TODO : fix BVH bug
 	//	BVH 传输？
 	//===========================
 	
-	//int i = 1;
-	//HitResult res = HitArray(ray, i, i);
-
-	BVHNode node = getBVHNode(5);
-	
 	HitResult res = HitBVH(ray);
-	bool r = HitAABB(ray, node.AA, node.BB);
+	HitResult r = HitArray(ray, 0, triangleCount - 1);
+
 	vec3 color;
 	
-	if (res.isHit) 
-	{
-		color = vec3(1);
-	}
-	else
-	{
-		color = vec3(0.5);
-	}
+	//if (res.isHit && r.isHit)
+	//{
+	//	color = res.material.baseColor;
+	//}
+	//else if (r.isHit)
+	//	color = vec3(0, 1, 0);
+	//else if (res.isHit)
+	//	color = vec3(0, 0, 1);
 
+	if(r.isHit)
+	{
+		color = r.material.emissive + rayTracing(r, 3);
+	}
 
 	FragColor = vec4(color, 1);
-
-	
-	//BVHNode node = getBVHNode(1);
-	//float r = HitAABB(ray, node.AA, node.BB);
-	//HitResult res = HitBVH(ray);
-	//vec3 color = vec3(0);
-	//if (res.isHit && r > 0)
-	//	color = vec3(1, 0, 0);
-	//else if (r > 0)
-	//	color = vec3(0, 1, 0);
-	//else if(res.isHit)
-	//	color = res.material.baseColor;
-	
-
-
-	//HitResult res = HitArray(ray, 0, triangleCount - 1);
-	//HitResult res = HitBVH(ray);
-
-	//vec3 color = vec3(0);
-
-	//for (int i = 0; i < 5; i++) {
-	//	if (res.isHit)
-	//	{
-	//		color += rayTracing(res, 3);
-	//	}
-	//}
-	//color /= 5;
-	
-
-
-	//vec3 color;
-	//for (int i = 0; i < BVHCount; i++)
-	//{
-	//	BVHNode node = getBVHNode(i);
-	//	if (node.n > 0)
-	//	{
-	//		int L = node.index;
-	//		int  R = node.index + node.n - 1;
-	//		HitResult res = HitArray(ray, L, R);
-	//		if (res.isHit)
-	//			color = res.material.baseColor;
-	//	}
-	//}
-
-	//BVHNode node = getBVHNode(1);
-	//BVHNode left = getBVHNode(node.left);
-	//BVHNode right = getBVHNode(node.right);
-
-	//bool r1 = HitAABB(ray, left.AA, left.BB);
-	//bool r2 = HitAABB(ray, right.AA, right.BB);
-
-	//vec3 color;
-	//if (r1) color = vec3(1, 0, 0);
-	//if (r2) color = vec3(0, 1, 0);
-	//if (r1 && r2 ) color = vec3(1, 1, 0);
-
-
-	//FragColor = vec4(color, 1);
 }

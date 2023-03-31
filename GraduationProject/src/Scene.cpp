@@ -100,27 +100,7 @@ void Scene::push(Light light)
 void Scene::Render(Shader& shader)
 {
 	if (!inited) {
-		//initTrianglesData();
-
-		std::vector<Triangle_encoded> t(5);
-		for (int i = 0; i < 5; i++) {
-			t[i].p2 = glm::vec3(-1 + i/2.0f, -1 + i/2.0f, -5);
-			t[i].p1 = glm::vec3(-1 + i/2.0f, -2 + i/2.0f, -5);
-			t[i].p3 = glm::vec3(-2 + i/2.0f, -1 + i/2.0f, -5);
-
-			t[i].n1 = glm::vec3(0, 0, 1);
-			t[i].n2 = glm::vec3(0, 0, 1);
-			t[i].n3 = glm::vec3(0, 0, 1);
-
-			t[i].baseColor = glm::vec3(1, 1, 1);
-			t[i].emissive = glm::vec3(1, 1, 1);
-			t[i].param1 = glm::vec3(0.4, 0.5, 1);
-
-			//trianglesData.clear();
-			trianglesData.push_back(t[i]);
-		}
-		myBindBuffer(tbo, texBuffer, trianglesData, 0);
-
+		initTrianglesData();
 		initBVHData();
 		inited = true;
 	}
@@ -129,7 +109,7 @@ void Scene::Render(Shader& shader)
 	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
 	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
 	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
-	shader.SetUniform3fv("camera.origin", {0 , 0 , 0});
+	shader.SetUniform3fv("camera.origin", {0 , 0 , 2});
 	//shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
 	//shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
 	//shader.SetUniform3fv("camera.origin", camera.GetPosition());
@@ -149,6 +129,31 @@ void Scene::Render(Shader& shader)
 
 	glBindVertexArray(VAO);
 	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void Scene::Draw(Shader& shader)
+{
+	if (!inited)
+	{
+		inited = true;
+		initTrianglesData();
+		initBVHData();
+	}
+	shader.SetUniform1i("triangles", 0);
+	shader.SetUniform1i("bvh", 1);
+
+	shader.SetUniform1i("triangleCount", trianglesData.size());
+	shader.SetUniform1i("BVHCount", BVHData.size());
+
+	shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
+	shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
+	shader.SetUniform3fv("camera.origin", camera.GetPosition());
+	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
+
+	for (auto& m : models)
+	{
+		m->Draw(shader);
+	}
 }
 
 float Scene::HitAABB(Ray ray)
@@ -183,16 +188,7 @@ void Scene::initTrianglesData()
 	}
 	std::cout << "三角形共" << trianglesData.size() << "个" << std::endl;
 
-	/*std::sort(trianglesData.begin(), trianglesData.end(), [](Triangle_encoded t1, Triangle_encoded t2) {
-		glm::vec3 c1 = GetTriangleCenter(t1);
-		glm::vec3 c2 = GetTriangleCenter(t2);
-
-		return (c1.x + c1.y + c1.z) < (c2.x + c2.y + c2.z);
-
-		});*/
-
 	// 绑定缓冲区
-	//transmitToBuffer(tbo, texBuffer, trianglesData);
 	myBindBuffer(tbo, texBuffer, trianglesData, 0);
 }
 
@@ -202,14 +198,15 @@ void Scene::initBVHData()
 	BVHNode tNode;
 	tNode.left = 255;
 	tNode.right = 128;
-	tNode.n = 0;
+	tNode.n = 30;
 	tNode.AA = { 1,1,0 };
 	tNode.BB = { 0,1,0 };
 
 	std::vector<BVHNode> nodes{ tNode };
 
-	std::cout << "三角形共" << trianglesData.size() << "个" << std::endl;
-	BuildBVH(trianglesData, nodes, 0, n - 1, 2);
+	// 减少BVH层数会变完整 why？0
+	BuildBVH(trianglesData, nodes, 0, n - 1, 8);
+	
 	std::cout << "BVH共" << nodes.size() << "个节点" << std::endl;
 
 	int nNode = nodes.size();
@@ -217,7 +214,7 @@ void Scene::initBVHData()
 		BVHData.clear();
 	for (int i = 0; i < nNode; i++)
 	{
-		std::cout << i << std::endl;
+		//std::cout << i << std::endl;
 		BVHData.push_back(encodeBVH(nodes[i]));
 	}
 

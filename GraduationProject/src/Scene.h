@@ -34,6 +34,7 @@ public:
 	void push(Light light);
 	
 	void Render(Shader& shader);
+	void Draw(Shader& shader);
 
 	float HitAABB(Ray ray);
 	HitResult HitArray(Ray ray, int l, int r);

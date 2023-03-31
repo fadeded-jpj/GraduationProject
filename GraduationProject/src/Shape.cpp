@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 8;
-const unsigned int Y_SEGMENTS = 8;
+const unsigned int X_SEGMENTS = 16;
+const unsigned int Y_SEGMENTS = 16;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -137,17 +137,19 @@ void Sphere::encodedData()
         GLuint Pos2;
         if (i % 2)  // 奇数
         {
-            Pos0 = indices[i - 2];
+            Pos0 = indices[i];
             Pos1 = indices[i - 1];
-            Pos2 = indices[i];
+            Pos2 = indices[i - 2];
         }
         else
         {
-            Pos0 = indices[i - 1];
+            Pos0 = indices[i];
             Pos1 = indices[i - 2];
-            Pos2 = indices[i];
+            Pos2 = indices[i - 1];
         }
-            
+        
+        //std::cout << "indices " << i << ": (" << Pos0 << "," << Pos1 << "," << Pos2 << ")" << std::endl;
+
         Triangle_encoded t;
         t.p1 = positions[Pos0];
         t.p2 = positions[Pos1];
@@ -299,6 +301,7 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
             data.push_back(uv[i].y);
         }
     }
+
     // 三角形数据传入
     encodedData();
 

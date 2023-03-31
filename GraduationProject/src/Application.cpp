@@ -64,11 +64,11 @@ int main()
     Sphere textSphere3( {-1.3, 1, -3}, 0.5, { 0.0, 0.0, 1.0 });
     Sphere lightSphere({ 0, 0, 3 }, 1, { 1,1,1 });
     textSphere1.setEmissive(glm::vec3(0.5));
-    lightSphere.setEmissive(glm::vec3(1.0));
+    //lightSphere.setEmissive(glm::vec3(1.0));
 
     myScene.push(&textSphere1);
-    //myScene.push(&textSphere2);
-    //myScene.push(&textSphere3);
+    myScene.push(&textSphere2);
+    myScene.push(&textSphere3);
     //myScene.push(&lightSphere);
 
 
