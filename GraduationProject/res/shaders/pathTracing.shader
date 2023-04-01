@@ -83,7 +83,8 @@ uniform samplerBuffer triangles;
 uniform samplerBuffer bvh;
 uniform int triangleCount;
 uniform int BVHCount;
-uniform uint frameCount;
+uniform int frameCount;
+uniform sampler2D lastFrame;
 
 uniform vec3 eye;
 uniform mat4 cameraRotate;
@@ -120,11 +121,36 @@ vec2 rand2()
 	return vec2(rand(), rand());
 }
 
-vec3 SampleHemisphere() {
+// --------- Sample----------------
+vec3 myMul(vec3 v, mat3 m)
+{
+	return v.x * m[0] + v.y * m[1] + v.z* m[2];
+}
+
+float sdot(vec3 x, vec3 y, float f = 1.0f)
+{
+	return clamp(dot(x, y) * f, 0.0, 1.0);
+}
+
+mat3 GetTangentSpace(vec3 N)
+{
+	vec3 helper = vec3(1, 0, 0);
+	if (abs(N.x) > 0.99)
+		helper = vec3(0, 0, 1);
+	
+	vec3 tangent = normalize(cross(N, helper));
+	vec3 binormal = normalize(cross(N, tangent));
+	return mat3(tangent, binormal, N);
+}
+
+vec3 SampleHemisphere(vec3 normal) {
 	float z = rand();
 	float r = max(0, sqrt(1 - z * z));
 	float phi = 2.0 * PI * rand();
-	return vec3(r * cos(phi), r * sin(phi), z);
+
+	vec3 tangentSpaceDir = vec3(r * cos(phi), r * sin(phi), z);
+
+	return myMul(tangentSpaceDir, GetTangentSpace(normal));
 }
 
 vec3 toNormalHemisphere(vec3 V, vec3 N)
@@ -135,6 +161,11 @@ vec3 toNormalHemisphere(vec3 V, vec3 N)
 	vec3 tangent = normalize(cross(N, helper));
 	vec3 bitangent = normalize(cross(N, tangent));
 	return V.x * tangent + V.y * bitangent + V.z * N;
+}
+
+vec3 SampleHemisphereCos(vec3 normal, float alpha)
+{
+	return vec3(0);
 }
 //==========================================
 
@@ -186,8 +217,6 @@ float HitAABB(Ray r, vec3 AA, vec3 BB)
 
 	return (t1 >= t0) ? ((t0 > 0.0) ? (t0) : (t1)) : (-1);
 }
-
-
 
 Triangle getTriangle(int i) {
 	int offset = i * TRIANGLE_SIEZ;
@@ -391,7 +420,8 @@ vec3 rayTracing(HitResult hit, int maxBounce) {
 	{
 		maxBounce--;
 
-		vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
+		//vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
+		vec3 wi = SampleHemisphere(hit.normal);
 
 		Ray ray;
 		ray.start = hit.HitPoint;
@@ -410,11 +440,52 @@ vec3 rayTracing(HitResult hit, int maxBounce) {
 		vec3 f_r = hit.material.baseColor / PI;
 
 		vec3 Le = newHit.material.emissive;
-		Lo += history * Le * f_r * cosine_i / (pdf * 1);
+		Lo += history * Le * f_r * cosine_i / (pdf);
 
 		hit = newHit;
-		history *= f_r * cosine_i / (pdf * 1);
+		history *= f_r * cosine_i / (pdf);
 		
+	}
+	return Lo;
+}
+
+vec3 pathTracing(HitResult hit, float RR) {
+	vec3 Lo = vec3(0);
+	vec3 history = vec3(1);
+
+	float P = 1f;
+
+	while (P > RR)
+	{
+		//maxBounce--;
+		P = rand();
+
+		//vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
+		vec3 wi = SampleHemisphere(hit.normal);
+
+		Ray ray;
+		ray.start = hit.HitPoint + hit.normal * 0.01f;
+		ray.dir = wi;
+
+		//HitResult newHit = HitBVH(ray);
+		HitResult newHit = HitArray(ray, 0, triangleCount - 1);
+
+
+		if (!newHit.isHit)
+			break;
+
+		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
+		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
+		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
+		vec3 f_r = hit.material.baseColor / PI;
+
+		vec3 Le = newHit.material.emissive;
+
+		history *= f_r * cosine_i / (pdf * P);
+	
+		Lo += history * Le;
+		hit = newHit;
+
 	}
 	return Lo;
 }
@@ -437,15 +508,16 @@ void main()
 	
 	Ray ray = CameraGetRay(camera, screenCoord);
 
+
 	//===========================
 	// TODO : fix BVH bug
 	//	BVH 传输？
 	//===========================
 	
-	HitResult res = HitBVH(ray);
+	//HitResult r = HitBVH(ray);
 	HitResult r = HitArray(ray, 0, triangleCount - 1);
 
-	vec3 color;
+	vec3 color = vec3(0);
 	
 	//if (res.isHit && r.isHit)
 	//{
@@ -455,11 +527,18 @@ void main()
 	//	color = vec3(0, 1, 0);
 	//else if (res.isHit)
 	//	color = vec3(0, 0, 1);
-
-	if(r.isHit)
-	{
-		color = r.material.emissive + rayTracing(r, 3);
+	for (int i = 0; i < 1; i++) {
+		if (r.isHit)
+		{
+			color += r.material.emissive + pathTracing(r, 0.8);
+		}
 	}
+	color /= 1;
+
+	// 与上一帧拟合
+	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
+	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
+	//color += lastColor;
 
 	FragColor = vec4(color, 1);
 }

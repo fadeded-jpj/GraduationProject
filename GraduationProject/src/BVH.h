@@ -11,8 +11,8 @@
 
 struct BVHNode {
 	int left, right;	//左右孩子下标
-	int n;
-	int index;
+	int n;				// 当前三角形个数
+	int index;			// 三角形起始下标
 	glm::vec3 AA, BB;	// hitbox AA为下限 BB为上限
 };
 

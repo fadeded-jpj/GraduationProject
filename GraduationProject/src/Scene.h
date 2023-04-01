@@ -5,6 +5,31 @@
 
 #include <vector>
 
+extern const unsigned int SCR_WIDTH;
+extern const unsigned int SCR_HEIGHT;
+
+class FrameBuffer {
+public:
+	GLuint FBO; //Ö¡»º³åÇø
+	GLuint RBO;
+	std::vector<GLuint> textureColorbuffer;
+	std::vector<GLuint> attachment;
+
+	GLuint VAO, VBO, EBO;
+
+	std::vector<float> vertices;
+	std::vector<GLuint> indices;
+
+
+public:
+	FrameBuffer();
+	~FrameBuffer();
+
+	void Bind() const;
+	void UnBind() const;
+	
+	void Draw(Shader shader, GLuint& tex);
+};
 
 class Scene {
 private:
@@ -35,6 +60,7 @@ public:
 	
 	void Render(Shader& shader);
 	void Draw(Shader& shader);
+	void BindTex(GLuint &tex, GLuint slot = 0);
 
 	float HitAABB(Ray ray);
 	HitResult HitArray(Ray ray, int l, int r);
@@ -61,3 +87,4 @@ inline void Scene::myBindBuffer(GLuint& tbo, GLuint& buffer, std::vector<T>& dat
 	glBindTexture(GL_TEXTURE_BUFFER, buffer);
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo);
 }
+

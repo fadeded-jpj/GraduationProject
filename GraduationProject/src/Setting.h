@@ -3,7 +3,10 @@
 #define __SETTING_H__
 
 #include "Camera.h"
+#include "Shape.h"
 #include <random>
+#include <vector>
+
 
 //-------- windows settings-----------
 extern const unsigned int SCR_WIDTH = 1200;
@@ -22,6 +25,58 @@ float lastFrame = 0.0f;
 unsigned int frameCount = 0;
 
 //-----------end------------------------
+
+
+//----------Connle Box DATA-----------------
+std::vector<glm::vec3> Left = {
+	{-2,-2,-2},
+	{-2, 2,-2},
+	{-2, 2,-7},
+	{-2,-2,-7}
+};
+std::vector<glm::vec3> Right = {
+	{ 2,-2,-2},
+	{ 2, 2,-2},
+	{ 2, 2,-7},
+	{ 2,-2,-7}
+};
+
+std::vector<glm::vec3> Up = {
+	{ 2, 2,-2},
+	{-2, 2,-2},
+	{-2, 2,-7},
+	{ 2, 2,-7}
+};
+
+std::vector<glm::vec3> Down = {
+	{ 2,-2,-2},
+	{-2,-2,-2},
+	{-2,-2,-7},
+	{ 2,-2,-7}
+};
+
+std::vector<glm::vec3> Back = {
+	{-2,-2,-7},
+	{-2, 2,-7},
+	{ 2, 2,-7},
+	{ 2,-2,-7}
+};
+
+std::vector<glm::vec3> LightUp = {
+	{ 0.5f, 1.99f,-4},
+	{-0.5f, 1.99f,-4},
+	{-0.5f, 1.99f,-6},
+	{ 0.5f, 1.99f,-6}
+};
+
+Material RED({ 1,0,0 });
+Material GREEN({ 0,1,0 });  
+Material BLUE({ 0,0,1 });   
+Material YELLOW({ 1,1,0 }); 
+Material PURPLE({ 1,0,1 }); 
+Material CYAN({ 0,1,1 });   
+Material WHITE({ 1,1,1 });  
+Material GREY({ 0.5f,0.5f,0.5f });
 
 
 #endif // !__SETTING_H__

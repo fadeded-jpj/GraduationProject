@@ -32,6 +32,8 @@ struct Material
 	float ao = 1.0f;
 	float roughness = 0.1f;
 	float metallic = 0.0f;
+	
+	Material(glm::vec3 color = glm::vec3(0)) :color(color) {}
 };
 
 struct HitResult
@@ -104,18 +106,28 @@ public:
 	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive);
 
-	std::vector<Triangle_encoded> getCodedData() { return triangles; }
+	inline std::vector<Triangle_encoded> getCodedData() { return triangles; }
 };
 
-class Square : public shape
+class Plane : public shape
 {
 private:
-	std::vector<glm::vec3> points;
-	std::vector<glm::vec3> normals;
-	std::vector<unsigned int> indices;
+	std::vector<Triangle_encoded> triangles;
 
-	Material materal;
 public:
-	Square();
-	Square(std::vector<glm::vec3> points);
+	std::vector<glm::vec3> points;
+	glm::vec3 normal;
+	Material materal;
+
+private:
+	void encodeData();
+public:
+	Plane(std::vector<glm::vec3> points, glm::vec3 normal, Material material);
+	~Plane(){}
+
+	void Draw(Shader& shader) {}
+	HitResult intersect(Ray ray) { return HitResult(); }
+	void setEmissive(glm::vec3 emissive) {}
+
+	inline std::vector<Triangle_encoded> getCodedData() { return triangles; };
 };

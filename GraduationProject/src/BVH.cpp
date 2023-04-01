@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-const float _MAX_ = 114514;
+const float _MAX_ = 114514.0f;
 
 using namespace glm;
 
@@ -57,8 +57,8 @@ int BuildBVH(std::vector<Triangle_encoded>& triangles, std::vector<BVHNode>& nod
     if (lenX > lenY && lenX > lenZ)
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
-                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / vec3(1);
-                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / vec3(1);
+                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / 3.0f;
+                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / 3.0f;
 
                 return center1.x < center2.x;
             });
@@ -66,8 +66,8 @@ int BuildBVH(std::vector<Triangle_encoded>& triangles, std::vector<BVHNode>& nod
     else if (lenY > lenX && lenY > lenZ)
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
-                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / vec3(1);
-                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / vec3(1);
+                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / 3.0f;
+                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / 3.0f;
 
                 return center1.y < center2.y;
             });
@@ -75,8 +75,8 @@ int BuildBVH(std::vector<Triangle_encoded>& triangles, std::vector<BVHNode>& nod
     else 
         std::sort(triangles.begin() + left, triangles.begin() + right + 1,
             [](const Triangle_encoded& t1, const Triangle_encoded& t2) {
-                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / vec3(1);
-                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / vec3(1);
+                vec3 center1 = (t1.p1 + t1.p2 + t1.p3) / 3.0f;
+                vec3 center2 = (t2.p1 + t2.p2 + t2.p3) / 3.0f;
 
                 return center1.z < center2.z;
             });
@@ -115,5 +115,3 @@ BVHNode_encode encodeBVH(const BVHNode& bvh)
     }
     return res;
 }
-
-

@@ -1609,6 +1609,7 @@
     <None Include="src\vendor\assimp\include\assimp\vector3.inl">
       <Filter>头文件</Filter>
     </None>
+    <None Include="res\shaders\lastframe.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">

@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 16;
-const unsigned int Y_SEGMENTS = 16;
+const unsigned int X_SEGMENTS = 8;
+const unsigned int Y_SEGMENTS = 8;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -147,8 +147,6 @@ void Sphere::encodedData()
             Pos1 = indices[i - 2];
             Pos2 = indices[i - 1];
         }
-        
-        //std::cout << "indices " << i << ": (" << Pos0 << "," << Pos1 << "," << Pos2 << ")" << std::endl;
 
         Triangle_encoded t;
         t.p1 = positions[Pos0];
@@ -374,4 +372,35 @@ void Sphere::Draw(Shader& shader)
     shader.Bind();
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLE_STRIP, indexCount, GL_UNSIGNED_INT, 0);
+}
+
+void Plane::encodeData()
+{
+    int n = points.size();
+    
+    if (n < 4) return;
+
+    for (int i = 0; i < 2; i++)
+    {
+        Triangle_encoded t;
+        t.p1 = points[0];
+        t.p2 = points[i + 1];
+        t.p3 = points[i + 2];
+        
+        t.n1 = t.n2 = t.n3 = normal;
+
+        t.baseColor = materal.color;
+        t.emissive = materal.emissive;
+        t.param1 = { materal.ao, materal.roughness, materal.metallic };
+
+        triangles.push_back(t);
+    }
+
+}
+
+Plane::Plane(std::vector<glm::vec3> p, glm::vec3 n, Material m)
+    :normal(n), materal(m),points(p)
+{
+    
+    encodeData();
 }
