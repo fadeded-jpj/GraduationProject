@@ -107,10 +107,10 @@ void Scene::Render(Shader& shader)
 	}
 
 	shader.Bind();
-	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
-	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
-	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
-	shader.SetUniform3fv("camera.origin", {0 , 0 , 2});
+	shader.SetUniform3fv("camera.lower_left_corner", { -2.0, -2.0, -2.0 });
+	shader.SetUniform3fv("camera.horizontal", {4, 0, 0});
+	shader.SetUniform3fv("camera.vertical", { 0, 4, 0 });
+	shader.SetUniform3fv("camera.origin", {0 , 0 , 4});
 	//shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
 	//shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
 	//shader.SetUniform3fv("camera.origin", camera.GetPosition());

@@ -26,6 +26,7 @@ unsigned int frameCount = 0;
 
 //-----------end------------------------
 
+const float PI = 3.14159265359;
 
 //----------Connle Box DATA-----------------
 std::vector<glm::vec3> Left = {
@@ -63,8 +64,8 @@ std::vector<glm::vec3> Back = {
 };
 
 std::vector<glm::vec3> LightUp = {
-	{ 0.5f, 1.99f,-4},
-	{-0.5f, 1.99f,-4},
+	{ 0.5f, 1.99f,-3},
+	{-0.5f, 1.99f,-3},
 	{-0.5f, 1.99f,-6},
 	{ 0.5f, 1.99f,-6}
 };
@@ -76,7 +77,7 @@ Material YELLOW({ 1,1,0 });
 Material PURPLE({ 1,0,1 }); 
 Material CYAN({ 0,1,1 });   
 Material WHITE({ 1,1,1 });  
-Material GREY({ 0.5f,0.5f,0.5f });
-
+Material GREY({ 0.8f,0.8f,0.8f });
+Material WHITE_MIRROR({ 1,1,1 }, 0.05f, 0.9f, 0.0f);
 
 #endif // !__SETTING_H__

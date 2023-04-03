@@ -109,7 +109,7 @@ int main()
         glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffer[i], 0);
         attachment.push_back(GL_COLOR_ATTACHMENT0 + i);
     }
-    glDrawBuffers(attachment.size(), &attachment[0]);
+    glDrawBuffers(1, &attachment[0]);
     // create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
     //unsigned int rbo;
     //glGenRenderbuffers(1, &rbo);
@@ -127,24 +127,38 @@ int main()
     Material LightMaterial({ 1,1,1 });
     LightMaterial.emissive = glm::vec3(1.0f);
 
+    RED.roughness = 0.1f;
+    RED.metallic = 0.2f;
+
+    WHITE.roughness = 0.1f;
+    WHITE.metallic = 0.0f;
+    WHITE.specular = 0.8f;
+
+
     Plane PlaneLeft(Left, { -1,0,0 }, RED);
     Plane PlaneRight(Right, { -1,0,0 }, GREEN);
     Plane PlaneUp(Up, { 0,-1,0 }, WHITE);
     Plane PlaneDown(Down, { 0,-1,0 }, WHITE);
-    Plane PlaneBack(Back, { 0,0,-1 }, WHITE);
+    Plane PlaneBack(Back, { 0,0,-1 }, WHITE_MIRROR);
     Plane PlaneLight(LightUp, { 0,-1,0 }, LightMaterial);
 
-    Sphere textSphere1({ 0,0,-6 }, 0.8, { 1.0, 0.5, 0.2 });
-    Sphere textSphere2({ 1.3, 1,-3 }, 0.3, { 0.3, 1.0, 0.1 });
-    Sphere textSphere3( {-1.3, 1, -4}, 0.3, { 0.3, 0.1, 1.0 });
+    Cube textCube1({ 0.3, -1.5, -6 }, CYAN);
+    Cube textCube2({ -1.0, -1.0, -4 }, WHITE, 0.5, 1.0, 0.5, PI / 4.0f);
+
+
+    Material mySphere({ 1.0, 0.6, 0.6 }, 1.0f, 0.0f);
+
+    Sphere textSphere1({ 0,1.0,-6 }, 0.5, WHITE_MIRROR);
+    Sphere textSphere2({ 1.5, -1,-6 }, 0.3, { 1.0, 1.0, 1.0 });
+    Sphere textSphere3( {-1.3, -1, -6.5}, 0.4, { 0.3, 0.5, 1.0 });
     //Sphere lightSphere({ 0, 2, -4 }, 1, { 1,1,1 });
 
     //textSphere1.setEmissive(glm::vec3(1));
     //lightSphere.setEmissive(glm::vec3(1.0));
 
-    myScene.push(&textSphere1);
-    myScene.push(&textSphere2);
-    myScene.push(&textSphere3);
+    //myScene.push(&textSphere1);
+    //myScene.push(&textSphere2);
+    //myScene.push(&textSphere3);
     //myScene.push(&lightSphere);
     
     myScene.push(&PlaneBack);
@@ -153,6 +167,9 @@ int main()
     myScene.push(&PlaneRight);
     myScene.push(&PlaneUp);
     myScene.push(&PlaneLight);
+
+    myScene.push(&textCube1);
+    myScene.push(&textCube2);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
@@ -202,20 +219,21 @@ int main()
         glActiveTexture(GL_TEXTURE2);
         glBindTexture(GL_TEXTURE_2D, textureColorbuffer[0]);
         myScene.Render(shader);
-        glDrawBuffers(attachment.size(), &attachment[0]);
+        glDrawBuffers(1, &attachment[0]);
         
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         
         glDisable(GL_DEPTH_TEST);
         glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
         
-        
         fbShader.Bind();
         glBindVertexArray(quadVAO);
-        for (int i = 0; i < textureColorbuffer.size(); i++) {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, textureColorbuffer[i]);
-        }
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureColorbuffer[0]);
+        //for (int i = 0; i < textureColorbuffer.size(); i++) {
+        //    glActiveTexture(GL_TEXTURE0 + i);
+        //    glBindTexture(GL_TEXTURE_2D, textureColorbuffer[i]);
+        //}
         glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
         fbShader.UnBind();
         

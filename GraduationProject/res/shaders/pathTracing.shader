@@ -25,7 +25,7 @@ out vec4 FragColor;
 in vec2 screenCoord;
 in vec3 pix;
 
-#define TRIANGLE_SIEZ 9
+#define TRIANGLE_SIEZ 12
 #define BVHNODE_SIZE 4
 #define INF 114514
 #define PI 3.1415926535859
@@ -35,9 +35,19 @@ struct Material {
 	vec3 emissive;
 	vec3 baseColor;
 
-	float ao;
+	float subsurface;
 	float roughness;
 	float metallic;
+
+	float specular;
+	float specularTint;
+	float anisotropic;
+
+	float sheen;
+	float sheenTine;
+	float clearcoat;
+
+	float clearcoatGloss;
 };
 
 struct Triangle {
@@ -163,11 +173,16 @@ vec3 toNormalHemisphere(vec3 V, vec3 N)
 	return V.x * tangent + V.y * bitangent + V.z * N;
 }
 
-vec3 SampleHemisphereCos(vec3 normal, float alpha)
+vec3 SampleHemisphereRand()
 {
-	return vec3(0);
+	float z = rand();
+	float r = max(0, sqrt(1.0 - z * z));
+	float phi = 2.0 * PI * rand();
+	return vec3(r * cos(phi), r * sin(phi), z);
 }
 //==========================================
+
+
 
 // 读取BVH
 BVHNode getBVHNode(int i)
@@ -241,11 +256,24 @@ Material getMaterial(int i) {
 
 	res.emissive = texelFetch(triangles, offset + 6).xyz;
 	res.baseColor = texelFetch(triangles, offset + 7).xyz;
-	vec3 tmp = texelFetch(triangles, offset + 8).xyz;
+	vec3 param1 = texelFetch(triangles, offset + 8).xyz;
+	vec3 param2 = texelFetch(triangles, offset + 9).xyz;
+	vec3 param3 = texelFetch(triangles, offset + 10).xyz;
+	vec3 param4 = texelFetch(triangles, offset + 11).xyz;
 
-	res.ao = tmp.x;
-	res.roughness = tmp.y;
-	res.metallic = tmp.z;
+	res.subsurface = param1.x;
+	res.roughness = param1.y;
+	res.metallic = param1.z;
+
+	res.specular = param2.x;
+	res.specularTint = param2.y;
+	res.anisotropic = param2.z;
+	
+	res.sheen = param3.x;
+	res.sheenTine = param3.y;
+	res.clearcoat = param3.z;
+	
+	res.clearcoatGloss = param4.x;
 
 	return res;
 }
@@ -387,16 +415,6 @@ HitResult HitBVH(Ray ray)
 
 		if (dLeft > 0 && dRight > 0)
 		{
-			//if (dLeft < dRight)
-			//{
-			//	stack[sp++] = node.right;
-			//	stack[sp++] = node.left;
-			//}
-			//else
-			//{
-			//	stack[sp++] = node.left;
-			//	stack[sp++] = node.right;
-			//}
 			stack[sp++] = node.right;
 			stack[sp++] = node.left;
 		}
@@ -412,59 +430,177 @@ HitResult HitBVH(Ray ray)
 	return res;
 }
 
-vec3 rayTracing(HitResult hit, int maxBounce) {
-	vec3 Lo = vec3(0);
-	vec3 history = vec3(1);
 
-	while (maxBounce > 0)
-	{
-		maxBounce--;
+//============PRB===================
+float DistributionGGX(vec3 N, vec3 H, float roughness)
+{
+	float a = roughness * roughness;
+	float a2 = a * a;
+	float NdotH = max(dot(N, H), 0.0);
+	float NdotH2 = NdotH * NdotH;
 
-		//vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
-		vec3 wi = SampleHemisphere(hit.normal);
+	float nom = a2;
+	float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
 
-		Ray ray;
-		ray.start = hit.HitPoint;
-		ray.dir = wi;
-
-		//HitResult newHit = HitBVH(ray);
-		HitResult newHit = HitArray(ray, 0, triangleCount-1);
-
-
-		if (!newHit.isHit)
-			break;
-
-		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
-		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
-		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
-		vec3 f_r = hit.material.baseColor / PI;
-
-		vec3 Le = newHit.material.emissive;
-		Lo += history * Le * f_r * cosine_i / (pdf);
-
-		hit = newHit;
-		history *= f_r * cosine_i / (pdf);
-		
-	}
-	return Lo;
+	return nom / denom;
 }
 
+float GeometrySchlickGGX(float NdotV, float roughness)
+{
+	float r = (roughness + 1.0);
+	float k = (r * r) / 8.0;
+
+	float nom = NdotV;
+	float denom = NdotV * (1.0 - k) + k;
+
+	return nom / denom;
+}
+
+float GeometrySmith(vec3 N, vec3 V, vec3 L, float roughness)
+{
+	float NdotV = max(dot(N, V), 0.0);
+	float NdotL = max(dot(N, L), 0.0);
+	float ggx2 = GeometrySchlickGGX(NdotV, roughness);
+	float ggx1 = GeometrySchlickGGX(NdotL, roughness);
+
+	return ggx1 * ggx2;
+}
+
+vec3 fresnelSchlick(float cosTheta, vec3 F0)
+{
+	return F0 + (1.0 - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+float schlickFresnel(float cosTheta)
+{
+	return pow(clamp(1 - cosTheta, 0.0, 1.0), 5.0);
+}
+
+vec3 PBR(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0) 
+		return vec3(0);
+
+	vec3 H = normalize(L + V);
+	float NdotH = dot(N, H);
+	float LdotH = dot(L, H);
+
+	vec3 F0 = vec3(0.04);
+	F0 = mix(F0, material.baseColor, material.metallic);
+	// 菲涅尔项
+	vec3 F = fresnelSchlick(max(dot(H, V), 0.0), F0);
+
+	float NDF = DistributionGGX(N, H, material.roughness);
+	float G = GeometrySmith(N, V, L, material.roughness);
+
+	vec3 nominator = NDF * G * F;
+	float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.001;
+	vec3 specular = nominator / denominator;
+
+	vec3 ks = F;
+	vec3 kd = vec3(1.0) - ks;
+
+	kd *= 1.0 - material.metallic;
+
+	return kd * material.baseColor / PI + specular;
+}
+
+float SchlickFresnel(float u)
+{
+	float m = clamp(1 - u, 0, 1);
+	float m2 = m * m;
+	return m2 * m2 * m; // pow(m,5)
+}
+
+float GTR1(float NdotH, float a) {
+	if (a >= 1) return 1 / PI;
+	float a2 = a * a;
+	float t = 1 + (a2 - 1) * NdotH * NdotH;
+	return (a2 - 1) / (PI * log(a2) * t);
+}
+
+float GTR2(float NdotH, float a) {
+	float a2 = a * a;
+	float t = 1 + (a2 - 1) * NdotH * NdotH;
+	return a2 / (PI * t * t);
+}
+
+float smithG_GGX(float NdotV, float alphaG) {
+	float a = alphaG * alphaG;
+	float b = NdotV * NdotV;
+	return 1 / (NdotV + sqrt(a + b - a * b));
+}
+
+vec3 mon2lin(vec3 x)
+{
+	return vec3(pow(x[0], 2.2), pow(x[1], 2.2), pow(x[2], 2.2));
+}
+
+vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return vec3(0);
+
+	vec3 H = normalize(L + V);
+	float NdotH = dot(N, H);
+	float LdotH = dot(L, H);
+	
+	vec3 Cdlin = mon2lin(material.baseColor);
+
+	// diffuse
+	float Fd90 = 0.5 + 2.0 * material.roughness * LdotH * LdotH;
+	float FL = schlickFresnel(NdotL);
+	float FV = schlickFresnel(NdotV);
+
+	float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+	float Fss90 = LdotH * LdotH * material.roughness;
+	float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+	float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
+
+	vec3 diffuse = Cdlin / PI * mix(Fd, ss, material.subsurface) * (1 - material.metallic);
+	
+	// specular
+	float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z;
+	vec3 Ctint = (Cdlum) > 0 ? (Cdlin / Cdlum) : vec3(1);
+	vec3 Cspec = material.specular * mix(vec3(1), Ctint, material.specularTint);
+	vec3 Cspec0 = mix(0.08 * Cspec, Cdlin, material.metallic);
+	
+	float alpha = material.roughness * material.roughness;
+	float Ds = GTR2(NdotH, alpha);
+	float FH = SchlickFresnel(LdotH);
+	vec3 Fs = mix(Cspec0, vec3(1), FH);
+	float Gs = smithG_GGX(NdotL, material.roughness);
+	Gs *= smithG_GGX(NdotV, material.roughness);
+
+	vec3 specular = Gs * Fs * Ds;
+
+	return diffuse + specular;
+}
+
+//============================
 vec3 pathTracing(HitResult hit, float RR) {
 	vec3 Lo = vec3(0);
 	vec3 history = vec3(1);
 
-	float P = 1f;
+	float P = rand();
 
-	while (P > RR)
+	// RR 算法
+	while (P < RR)
 	{
 		//maxBounce--;
 		P = rand();
 
-		//vec3 wi = toNormalHemisphere(SampleHemisphere(), hit.normal);
+		//vec3 wi = SampleHemisphereRand();
 		vec3 wi = SampleHemisphere(hit.normal);
 
 		Ray ray;
-		ray.start = hit.HitPoint + hit.normal * 0.01f;
+		ray.start = hit.HitPoint;
 		ray.dir = wi;
 
 		//HitResult newHit = HitBVH(ray);
@@ -477,18 +613,65 @@ vec3 pathTracing(HitResult hit, float RR) {
 		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
 		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
 		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
-		vec3 f_r = hit.material.baseColor / PI;
+		
+		vec3 V = -hit.viewDir;
+		vec3 N = hit.normal;
+
+		vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
+		//vec3 f_r = hit.material.baseColor / PI;
 
 		vec3 Le = newHit.material.emissive;
 
-		history *= f_r * cosine_i / (pdf * P);
+		history *= f_r * cosine_i / pdf;
 	
 		Lo += history * Le;
 		hit = newHit;
 
 	}
+	return Lo / RR;
+}
+
+vec3 rayTracing(HitResult hit, int maxBounce) {
+	vec3 Lo = vec3(0);
+	vec3 history = vec3(1);
+
+	while (maxBounce > 0)
+	{
+		maxBounce--;
+
+		//vec3 wi = toNormalHemisphere(SampleHemisphereRand(), hit.normal);
+		vec3 wi = SampleHemisphere(hit.normal);
+
+		Ray ray;
+		ray.start = hit.HitPoint;
+		ray.dir = wi;
+
+		//HitResult newHit = HitBVH(ray);
+		HitResult newHit = HitArray(ray, 0, triangleCount - 1);
+
+		if (!newHit.isHit)
+			break;
+
+		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
+		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
+		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
+
+		vec3 V = -hit.viewDir;
+		vec3 N = hit.normal;
+
+		vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
+		//vec3 f_r = PBR(V, N, wi, hit.material);
+
+		vec3 Le = newHit.material.emissive;
+		Lo += history * Le * f_r * cosine_i / (pdf);
+
+		hit = newHit;
+		history *= f_r * cosine_i / (pdf);
+
+	}
 	return Lo;
 }
+
 
 Ray CameraGetRay(Camera camera, vec2 offset)
 {
@@ -519,26 +702,19 @@ void main()
 
 	vec3 color = vec3(0);
 	
-	//if (res.isHit && r.isHit)
-	//{
-	//	color = res.material.baseColor;
-	//}
-	//else if (r.isHit)
-	//	color = vec3(0, 1, 0);
-	//else if (res.isHit)
-	//	color = vec3(0, 0, 1);
-	for (int i = 0; i < 1; i++) {
+	int spp = 64;
+	for (int i = 0; i < spp; i++) {
 		if (r.isHit)
 		{
 			color += r.material.emissive + pathTracing(r, 0.8);
 		}
 	}
-	color /= 1;
-
-	// 与上一帧拟合
+	color /= 16;
+	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
 	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
-	//color += lastColor;
-
+	
+	//color = vec3(r.material.specular);
+	
 	FragColor = vec4(color, 1);
 }

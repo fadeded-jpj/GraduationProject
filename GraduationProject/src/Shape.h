@@ -29,11 +29,22 @@ struct Material
 	glm::vec3 emissive = glm::vec3(0, 0, 0);			// 是否发光
 	glm::vec3 normal = glm::vec3(0, 0, 0);				// 法向量
 	glm::vec3 color = glm::vec3(1.0f, 1.0f, 1.0f);		// 颜色
-	float ao = 1.0f;
+	float subsurface = 0.0f;
 	float roughness = 0.1f;
-	float metallic = 0.0f;
+	float metallic = 0.0;
+
+	float specular = 0.3f;
+	float specularTint = 0.1f;
+	float anisotropic = 0.0f;
+
+	float sheen = 0.0f;
+	float sheenTine = 0.0f;
+	float clearcoat = 0.5f;
 	
-	Material(glm::vec3 color = glm::vec3(0)) :color(color) {}
+	float clearcoatGloss = 1.0f;
+	
+	Material(glm::vec3 color = glm::vec3(0),float roughness = 0.0f,float metallic = 0.0f, float specular = 0.3f)
+		:color(color), roughness(roughness), metallic(metallic), specular(specular) {}
 };
 
 struct HitResult
@@ -100,6 +111,7 @@ private:
 
 public:
 	Sphere(const glm::vec3 center = { 0.0f, 0.0f, 0.0f }, const float R = 0.0f, const glm::vec3 color = { 0.0f, 0.0f, 0.0f });
+	Sphere( const glm::vec3 center, const float R, Material material);
 	~Sphere();
 	
 	void Draw(Shader& shader);
@@ -122,8 +134,37 @@ public:
 private:
 	void encodeData();
 public:
+	Plane(){}
 	Plane(std::vector<glm::vec3> points, glm::vec3 normal, Material material);
 	~Plane(){}
+
+	void Draw(Shader& shader) {}
+	HitResult intersect(Ray ray) { return HitResult(); }
+	void setEmissive(glm::vec3 emissive) {}
+
+	inline std::vector<Triangle_encoded> getCodedData() { return triangles; };
+};
+
+class Cube : public shape
+{
+private:
+	glm::vec3 vertices;	//左下
+	glm::vec3 center;
+
+	std::vector<Triangle_encoded> triangles;
+
+public:
+	Material material;
+
+	float Length, Width, Height;
+
+	std::vector<Plane> planes;
+
+private:
+	void encodeData();
+public:
+	Cube(glm::vec3 center, Material material, float X = 0.5f, float Y = 0.5f, float Z = 0.5f, float rotateY = 0.0f);
+	~Cube() {}
 
 	void Draw(Shader& shader) {}
 	HitResult intersect(Ray ray) { return HitResult(); }
