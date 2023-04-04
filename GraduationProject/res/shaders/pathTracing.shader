@@ -603,8 +603,8 @@ vec3 pathTracing(HitResult hit, float RR) {
 		ray.start = hit.HitPoint;
 		ray.dir = wi;
 
-		//HitResult newHit = HitBVH(ray);
-		HitResult newHit = HitArray(ray, 0, triangleCount - 1);
+		HitResult newHit = HitBVH(ray);
+		//HitResult newHit = HitArray(ray, 0, triangleCount - 1);
 
 
 		if (!newHit.isHit)
@@ -617,8 +617,8 @@ vec3 pathTracing(HitResult hit, float RR) {
 		vec3 V = -hit.viewDir;
 		vec3 N = hit.normal;
 
-		vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
-		//vec3 f_r = hit.material.baseColor / PI;
+		//vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
+		vec3 f_r = PBR(V, N, wi, hit.material);
 
 		vec3 Le = newHit.material.emissive;
 
@@ -646,8 +646,8 @@ vec3 rayTracing(HitResult hit, int maxBounce) {
 		ray.start = hit.HitPoint;
 		ray.dir = wi;
 
-		//HitResult newHit = HitBVH(ray);
-		HitResult newHit = HitArray(ray, 0, triangleCount - 1);
+		HitResult newHit = HitBVH(ray);
+		//HitResult newHit = HitArray(ray, 0, triangleCount - 1);
 
 		if (!newHit.isHit)
 			break;
@@ -697,19 +697,19 @@ void main()
 	//	BVH 传输？
 	//===========================
 	
-	//HitResult r = HitBVH(ray);
-	HitResult r = HitArray(ray, 0, triangleCount - 1);
+	HitResult r = HitBVH(ray);
+	//HitResult r = HitArray(ray, 0, triangleCount - 1);
 
 	vec3 color = vec3(0);
 	
-	int spp = 64;
+	int spp = 32;
 	for (int i = 0; i < spp; i++) {
 		if (r.isHit)
 		{
 			color += r.material.emissive + pathTracing(r, 0.8);
 		}
 	}
-	color /= 16;
+	color = color / spp * 8;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
 	color = mix(lastColor, color, 1.0 / float(frameCount + 1));

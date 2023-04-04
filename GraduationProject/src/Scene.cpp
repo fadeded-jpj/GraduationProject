@@ -103,14 +103,19 @@ void Scene::Render(Shader& shader)
 	if (!inited) {
 		initTrianglesData();
 		initBVHData();
+
+		// 绑定缓冲区
+		myBindBuffer(tbo, texBuffer, trianglesData, 0);
+		myBindBuffer(bvh_tbo, bvh_texBuffer, BVHData, 1);
+
 		inited = true;
 	}
 
 	shader.Bind();
-	shader.SetUniform3fv("camera.lower_left_corner", { -2.0, -2.0, -2.0 });
-	shader.SetUniform3fv("camera.horizontal", {4, 0, 0});
-	shader.SetUniform3fv("camera.vertical", { 0, 4, 0 });
-	shader.SetUniform3fv("camera.origin", {0 , 0 , 4});
+	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
+	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
+	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
+	shader.SetUniform3fv("camera.origin", {0 , 0 , 0});
 	//shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
 	//shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
 	//shader.SetUniform3fv("camera.origin", camera.GetPosition());
@@ -199,8 +204,7 @@ void Scene::initTrianglesData()
 	}
 	std::cout << "三角形共" << trianglesData.size() << "个" << std::endl;
 
-	// 绑定缓冲区
-	myBindBuffer(tbo, texBuffer, trianglesData, 0);
+
 }
 
 void Scene::initBVHData()
@@ -229,8 +233,6 @@ void Scene::initBVHData()
 		BVHData.push_back(encodeBVH(nodes[i]));
 	}
 
-	// 绑定缓冲区
-	myBindBuffer(bvh_tbo, bvh_texBuffer, BVHData, 1);
 }
 
 FrameBuffer::FrameBuffer()
