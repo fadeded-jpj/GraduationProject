@@ -8,28 +8,7 @@
 extern const unsigned int SCR_WIDTH;
 extern const unsigned int SCR_HEIGHT;
 
-class FrameBuffer {
-public:
-	GLuint FBO; //Ö¡»º³åÇø
-	GLuint RBO;
-	std::vector<GLuint> textureColorbuffer;
-	std::vector<GLuint> attachment;
 
-	GLuint VAO, VBO, EBO;
-
-	std::vector<float> vertices;
-	std::vector<GLuint> indices;
-
-
-public:
-	FrameBuffer();
-	~FrameBuffer();
-
-	void Bind() const;
-	void UnBind() const;
-	
-	void Draw(Shader shader, GLuint& tex);
-};
 
 class Scene {
 private:
@@ -88,3 +67,38 @@ inline void Scene::myBindBuffer(GLuint& tbo, GLuint& buffer, std::vector<T>& dat
 	glTexBuffer(GL_TEXTURE_BUFFER, GL_RGB32F, tbo);
 }
 
+class FrameBuffer {
+public:
+	GLuint FBO; //Ö¡»º³åÇø
+	GLuint RBO;
+	std::vector<GLuint> textureColorbuffer;
+	std::vector<GLuint> attachment;
+
+	GLuint VAO, VBO, EBO;
+
+	std::vector<float> vertices =
+	{
+		-1.0f,  1.0f,
+		-1.0f, -1.0f,
+		 1.0f, -1.0f,
+		 1.0f,  1.0f
+	};
+
+	std::vector<GLuint> indices =
+	{
+		0, 1, 3,   // first triangle
+		1, 2, 3    // second triangle
+	};
+
+
+public:
+	FrameBuffer();
+	~FrameBuffer();
+
+	void Bind();
+	void UnBind();
+
+	void Draw(Shader& shader, GLuint slot = 0, GLuint texIndex = 0);
+	void BindTexture(GLuint slot = 0, GLuint texIndex = 0);
+	void DrawBuffer(GLuint size);
+};

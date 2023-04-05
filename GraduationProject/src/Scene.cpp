@@ -236,29 +236,18 @@ void Scene::initBVHData()
 }
 
 FrameBuffer::FrameBuffer()
+	:FBO(0), VAO(0), VBO(0), EBO(0)
 {
-	vertices = {
-		-1.0f,  1.0f,
-		-1.0f, -1.0f,
-		 1.0f, -1.0f,
-		 1.0f,  1.0f
-	};
-
-	indices = {
-		0, 1, 3,   // first triangle
-		1, 2, 3    // second triangle
-	};
-
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), &vertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
@@ -268,7 +257,7 @@ FrameBuffer::FrameBuffer()
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
 
 	// create a color attachment texture
-	std::vector<GLuint> textureColorbuffer(6);
+	textureColorbuffer = std::vector<GLuint>(6);
 	for (int i = 0; i < 6; i++) {
 		glGenTextures(1, &textureColorbuffer[i]);
 		glBindTexture(GL_TEXTURE_2D, textureColorbuffer[i]);
@@ -278,13 +267,13 @@ FrameBuffer::FrameBuffer()
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, GL_TEXTURE_2D, textureColorbuffer[i], 0);
 		attachment.push_back(GL_COLOR_ATTACHMENT0 + i);
 	}
-	glDrawBuffers(attachment.size(), &attachment[0]);
+	glDrawBuffers(1, &attachment[0]);
 	// create a renderbuffer object for depth and stencil attachment (we won't be sampling these)
-	unsigned int rbo;
-	glGenRenderbuffers(1, &rbo);
-	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
+	//unsigned int rbo;
+	//glGenRenderbuffers(1, &rbo);
+	//glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, SCR_WIDTH, SCR_HEIGHT); // use a single renderbuffer object for both a depth AND stencil buffer.
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo); // now actually attach it
 
 	// now that we actually created the framebuffer and added all attachments we want to check if it is actually complete now    
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -295,34 +284,48 @@ FrameBuffer::FrameBuffer()
 FrameBuffer::~FrameBuffer()
 {
 	glDeleteFramebuffers(1, &FBO);
-	//glDeleteRenderbuffers(1, &RBO);
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 }
 
-void FrameBuffer::Bind() const
+void FrameBuffer::Bind() 
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-	//glBindRenderbuffer(GL_RENDERBUFFER, RBO);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_DEPTH_BUFFER_BIT);
 }
 
-void FrameBuffer::UnBind() const
+void FrameBuffer::UnBind() 
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	//glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glDisable(GL_DEPTH_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+void FrameBuffer::BindTexture(GLuint slot, GLuint texIndex)
+{
+	glActiveTexture(GL_TEXTURE0 + slot);
+	glBindTexture(GL_TEXTURE_2D, textureColorbuffer[texIndex]);
+}
 
-void FrameBuffer::Draw(Shader shader, GLuint& tex)
+void FrameBuffer::DrawBuffer(GLuint size)
+{
+	//size = glm::min(size, (GLuint)attachment.size());
+
+	glDrawBuffers(size, &attachment[0]);
+}
+
+void FrameBuffer::Draw(Shader& shader, GLuint slot, GLuint texIndex)
 {
 	shader.Bind();
 
 	glBindVertexArray(VAO);
 	
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, tex);
+	BindTexture(slot, texIndex);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6);
+	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
+	shader.UnBind();
 }
