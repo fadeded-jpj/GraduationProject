@@ -43,7 +43,7 @@ struct Material
 	
 	float clearcoatGloss = 1.0f;
 	
-	Material(glm::vec3 color = glm::vec3(0),float roughness = 0.0f,float metallic = 0.0f, float specular = 0.3f)
+	Material(glm::vec3 color = glm::vec3(0),float roughness = 0.9f,float metallic = 0.0f, float specular = 0.3f)
 		:color(color), roughness(roughness), metallic(metallic), specular(specular) {}
 };
 

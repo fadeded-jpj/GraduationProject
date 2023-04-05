@@ -70,20 +70,20 @@ int main()
     Material LightMaterial({ 1,1,1 });
     LightMaterial.emissive = glm::vec3(1.0f);
 
-    RED.roughness = 0.1f;
-    RED.metallic = 0.2f;
+    GREEN.roughness = 0.1f;
+    GREEN.metallic = 0.1f;
 
-    WHITE.roughness = 0.8f;
-    WHITE.metallic = 0.0f;
+    WHITE.roughness = 0.5f;
+    WHITE.metallic = 0.1f;
     WHITE.specular = 0.8f;
 
-    CYAN.roughness = 0.05f;
+    CYAN.roughness = 0.2f;
 
     Plane PlaneLeft(Left, { -1,0,0 }, RED);
     Plane PlaneRight(Right, { -1,0,0 }, GREEN);
     Plane PlaneUp(Up, { 0,-1,0 }, WHITE);
     Plane PlaneDown(Down, { 0,-1,0 }, WHITE);
-    Plane PlaneBack(Back, { 0,0,-1 }, WHITE);
+    Plane PlaneBack(Back, { 0,0,-1 }, WHITE_MIRROR);
     Plane PlaneLight(LightUp, { 0,-1,0 }, LightMaterial);
 
     Cube textCube1({ 0.3, -1.5, -7 }, CYAN);
@@ -100,7 +100,7 @@ int main()
     //textSphere1.setEmissive(glm::vec3(1));
     //lightSphere.setEmissive(glm::vec3(1.0));
 
-    myScene.push(&textSphere1);
+    //myScene.push(&textSphere1);
     //myScene.push(&textSphere2);
     //myScene.push(&textSphere3);
     //myScene.push(&lightSphere);

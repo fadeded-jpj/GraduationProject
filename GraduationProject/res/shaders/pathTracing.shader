@@ -166,23 +166,63 @@ vec3 SampleHemisphere(vec3 normal) {
 vec3 toNormalHemisphere(vec3 V, vec3 N)
 {
 	vec3 helper = vec3(1, 0, 0);
-	if (abs(N.x) > 0.99) 
+	if (abs(N.x) > 0.999) 
 		helper = vec3(0, 0, 1);
 	vec3 tangent = normalize(cross(N, helper));
 	vec3 bitangent = normalize(cross(N, tangent));
 	return V.x * tangent + V.y * bitangent + V.z * N;
 }
 
-vec3 SampleHemisphereRand()
+vec3 SampleCosHemisphere(vec3 normal, float x1, float x2)
 {
-	float z = rand();
-	float r = max(0, sqrt(1.0 - z * z));
-	float phi = 2.0 * PI * rand();
-	return vec3(r * cos(phi), r * sin(phi), z);
+	float r = sqrt(x1);
+	float theta = x2 * 2.0 * PI;
+
+	float x = r * cos(theta);
+	float y = r * sin(theta);
+
+	float z = sqrt(1.0 - x * x - y * y);
+
+	return myMul(vec3(x, y, z), GetTangentSpace(normal));
 }
+
+vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
+{
+	float phi_h = 2.0 * PI * x1;
+	float sin_phi_h = sin(phi_h);
+	float cos_phi_h = cos(phi_h);
+
+	float cos_theta_h = sqrt((1.0 - x2) / (1.0 + (alpha * alpha - 1.0) * x2));
+	float sin_theta_h = sqrt(max(0.0, 1.0 - cos_theta_h * cos_theta_h));
+
+	// 采样 "微平面" 的法向量 作为镜面反射的半角向量 h 
+	vec3 H = vec3(sin_theta_h * cos_phi_h, sin_theta_h * sin_phi_h, cos_theta_h);
+	H = toNormalHemisphere(H, N);   // 投影到真正的法向半球
+
+	vec3 L = reflect(-V, H);
+
+	return L;
+}
+
+vec3 SampleBRDF(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
+{
+	float alpha = max(0.05, material.roughness * material.roughness);
+
+	float r_diffuse = 1.0 - material.metallic;
+	float r_specular = 1.0;
+
+	float r_sum = r_diffuse + r_specular;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float specularThreshold = r_specular / r_sum;
+
+	if (p < diffuseThreshold)
+		return SampleCosHemisphere(N, x1, x2);
+	else
+		return SampleGTR2(V, N, x1, x2, alpha);
+}
+
 //==========================================
-
-
 
 // 读取BVH
 BVHNode getBVHNode(int i)
@@ -539,16 +579,50 @@ vec3 mon2lin(vec3 x)
 	return vec3(pow(x[0], 2.2), pow(x[1], 2.2), pow(x[2], 2.2));
 }
 
+
+float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = max(0.01, dot(N, L));
+	float NdotV = max(0.01, dot(N, V));
+	if (NdotL < 0 || NdotV < 0)
+		return 0;
+
+	vec3 H = normalize(L + V);
+	float NdotH = max(0.01, dot(N, H));
+	float LdotH = max(0.01, dot(L, H));
+
+	float alpha = max(0.05, material.roughness * material.roughness);
+	float Ds = GTR2(NdotH, alpha);
+
+	float pdf_diffuse = NdotH / PI;
+	float pdf_specular = Ds * NdotH / (4.0 * LdotH);
+
+	// 计算概率
+	float r_diffuse = 1.0 - material.metallic;
+	float r_specular = 1.0;
+
+	float r_sum = r_diffuse + r_specular;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float specularThreshold = r_specular / r_sum;
+
+	// 混合
+	float pdf = diffuseThreshold * pdf_diffuse + specularThreshold * pdf_specular;
+	pdf = max(1e-10, pdf);
+
+	return pdf;
+}
+
 vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 {
-	float NdotL = dot(N, L);
-	float NdotV = dot(N, V);
+	float NdotL = max(0.01, dot(N, L));
+	float NdotV = max(0.01, dot(N, V));
 	if (NdotL < 0 || NdotV < 0)
 		return vec3(0);
 
 	vec3 H = normalize(L + V);
-	float NdotH = dot(N, H);
-	float LdotH = dot(L, H);
+	float NdotH = max(0.01, dot(N, H));
+	float LdotH = max(0.01, dot(L, H));
 	
 	vec3 Cdlin = mon2lin(material.baseColor);
 
@@ -596,37 +670,42 @@ vec3 pathTracing(HitResult hit, float RR) {
 		//maxBounce--;
 		P = rand();
 
-		//vec3 wi = SampleHemisphereRand();
-		vec3 wi = SampleHemisphere(hit.normal);
+		vec3 V = -hit.viewDir;
+		vec3 N = hit.normal;
+
+		float x1 = rand();
+		float x2 = rand();
+		float x3 = rand();
+
+		//vec3 L = SampleHemisphereRand();
+		//vec3 L = SampleCosHemisphere(hit.normal, rand(), rand());
+		//vec3 L = SampleGTR2(V, N, rand(), rand(), alpha);
+		vec3 L = SampleBRDF(x1, x2, x3, V, N, hit.material);
 
 		Ray ray;
 		ray.start = hit.HitPoint;
-		ray.dir = wi;
+		ray.dir = L;
 
 		HitResult newHit = HitBVH(ray);
-		//HitResult newHit = HitArray(ray, 0, triangleCount - 1);
-
 
 		if (!newHit.isHit)
 			break;
 
-		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
-		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
-		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
-		
-		vec3 V = -hit.viewDir;
-		vec3 N = hit.normal;
+		float NdotL = dot(L, N);
+		if (NdotL <= 0.0) break;
 
-		//vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
-		vec3 f_r = PBR(V, N, wi, hit.material);
+		vec3 f_r = Disney_BRDF(V, N, L, hit.material);
+		//vec3 f_r = PBR(V, N, wi, hit.material);
+		float pdf = getPDF(V, N, L, hit.material);
+		
+		if (pdf <= 0.0) break;
 
 		vec3 Le = newHit.material.emissive;
 
-		history *= f_r * cosine_i / pdf;
+		history *= f_r * NdotL / pdf;
 	
 		Lo += history * Le;
 		hit = newHit;
-
 	}
 	return Lo / RR;
 }
