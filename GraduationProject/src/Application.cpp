@@ -50,19 +50,19 @@ int main()
     }
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
-   
-    Shader basic("res/shaders/basic.shader");
-
     Shader shader("res/shaders/pathTracing.shader");
     shader.Bind();
     shader.SetUniform1i("lastFrame", 2);
+    shader.SetUniform1i("width", SCR_WIDTH);
+    shader.SetUniform1i("height", SCR_HEIGHT);
+    shader.SetUniform1i("spp", 16);
     shader.UnBind();
 
     Shader fbShader("res/shaders/lastframe.shader");
     fbShader.Bind();
-    for (int i = 0; i < 6; i++) {
-        fbShader.SetUniform1i("texture" + std::to_string(i), i);
-    }
+
+    fbShader.SetUniform1i("texture0", 0);
+
     fbShader.UnBind();
     
     Scene myScene;
@@ -86,8 +86,8 @@ int main()
     Plane PlaneBack(Back, { 0,0,-1 }, WHITE_MIRROR);
     Plane PlaneLight(LightUp, { 0,-1,0 }, LightMaterial);
 
-    Cube textCube1({ 0.3, -1.5, -7 }, CYAN);
-    Cube textCube2({ -1.0, -1.0, -5.1 }, WHITE, 0.5, 1.0, 0.5, PI / 4.0f);
+    Cube textCube1({ 0.3, -1.5, -7.0 }, CYAN);
+    Cube textCube2({ -1.0, -1.2, -5.1 }, WHITE, 0.5, 0.8, 0.5, PI / 4.0f);
 
 
     Material mySphere({ 1.0, 0.6, 0.6 }, 1.0f, 0.0f);
@@ -152,11 +152,7 @@ int main()
         shader.Bind();
         shader.SetUniformMat4f("projection", projection);
         shader.SetUniformMat4f("view", view);
-        shader.SetUniform1i("frameCount", frameCount++);
-
-        shader.SetUniform1i("width", SCR_WIDTH);
-        shader.SetUniform1i("height", SCR_HEIGHT);
-        shader.SetUniform1i("lastFrame", 2);
+        shader.SetUniform1i("frameCount", frameCount++);     
 
         // 渲染数据读入帧缓冲区
         myfbo.BindTexture(2);
@@ -167,13 +163,6 @@ int main()
         myfbo.UnBind();
         myfbo.Draw(fbShader);
         
-
-        /*
-        basic.Bind();
-        basic.SetUniformMat4f("projection", projection);
-        basic.SetUniformMat4f("view", view);
-        textSphere1.Draw(basic);
-        */
         
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

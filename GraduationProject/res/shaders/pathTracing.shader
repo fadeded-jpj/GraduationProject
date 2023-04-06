@@ -101,6 +101,8 @@ uniform mat4 cameraRotate;
 uniform int width;
 uniform int height;
 
+uniform int spp;
+
 // ============= funcion ==================
 //=========================== Random =======================
 uint seed = uint(
@@ -206,7 +208,7 @@ vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
 
 vec3 SampleBRDF(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
 {
-	float alpha = max(0.05, material.roughness * material.roughness);
+	float alpha = max(0.01, material.roughness * material.roughness);
 
 	float r_diffuse = 1.0 - material.metallic;
 	float r_specular = 1.0;
@@ -524,6 +526,7 @@ vec3 PBR(vec3 V, vec3 N, vec3 L, in Material material)
 	if (NdotL < 0 || NdotV < 0) 
 		return vec3(0);
 
+
 	vec3 H = normalize(L + V);
 	float NdotH = dot(N, H);
 	float LdotH = dot(L, H);
@@ -552,14 +555,14 @@ float SchlickFresnel(float u)
 {
 	float m = clamp(1 - u, 0, 1);
 	float m2 = m * m;
-	return m2 * m2 * m; // pow(m,5)
+	return m2 * m2 * m;
 }
 
 float GTR1(float NdotH, float a) {
 	if (a >= 1) return 1 / PI;
 	float a2 = a * a;
 	float t = 1 + (a2 - 1) * NdotH * NdotH;
-	return (a2 - 1) / (PI * log(a2) * t);
+	return (a2 - 1) / (PI * log(a2) * t );
 }
 
 float GTR2(float NdotH, float a) {
@@ -571,7 +574,7 @@ float GTR2(float NdotH, float a) {
 float smithG_GGX(float NdotV, float alphaG) {
 	float a = alphaG * alphaG;
 	float b = NdotV * NdotV;
-	return 1 / (NdotV + sqrt(a + b - a * b));
+	return 1 / max(0.0, NdotV + sqrt(a + b - a * b));
 }
 
 vec3 mon2lin(vec3 x)
@@ -582,16 +585,16 @@ vec3 mon2lin(vec3 x)
 
 float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
 {
-	float NdotL = max(0.01, dot(N, L));
-	float NdotV = max(0.01, dot(N, V));
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
 	if (NdotL < 0 || NdotV < 0)
 		return 0;
 
 	vec3 H = normalize(L + V);
-	float NdotH = max(0.01, dot(N, H));
+	float NdotH = max(0.0, dot(N, H));
 	float LdotH = max(0.01, dot(L, H));
 
-	float alpha = max(0.05, material.roughness * material.roughness);
+	float alpha = max(0.01, material.roughness * material.roughness);
 	float Ds = GTR2(NdotH, alpha);
 
 	float pdf_diffuse = NdotH / PI;
@@ -667,7 +670,6 @@ vec3 pathTracing(HitResult hit, float RR) {
 	// RR 算法
 	while (P < RR)
 	{
-		//maxBounce--;
 		P = rand();
 
 		vec3 V = -hit.viewDir;
@@ -677,9 +679,6 @@ vec3 pathTracing(HitResult hit, float RR) {
 		float x2 = rand();
 		float x3 = rand();
 
-		//vec3 L = SampleHemisphereRand();
-		//vec3 L = SampleCosHemisphere(hit.normal, rand(), rand());
-		//vec3 L = SampleGTR2(V, N, rand(), rand(), alpha);
 		vec3 L = SampleBRDF(x1, x2, x3, V, N, hit.material);
 
 		Ray ray;
@@ -695,7 +694,7 @@ vec3 pathTracing(HitResult hit, float RR) {
 		if (NdotL <= 0.0) break;
 
 		vec3 f_r = Disney_BRDF(V, N, L, hit.material);
-		//vec3 f_r = PBR(V, N, wi, hit.material);
+		//vec3 f_r = PBR(V, N, L, hit.material);
 		float pdf = getPDF(V, N, L, hit.material);
 		
 		if (pdf <= 0.0) break;
@@ -781,14 +780,17 @@ void main()
 
 	vec3 color = vec3(0);
 	
-	int spp = 32;
 	for (int i = 0; i < spp; i++) {
 		if (r.isHit)
 		{
-			color += r.material.emissive + pathTracing(r, 0.8);
+			if (i == 0)
+				color = pathTracing(r, 0.8);
+			else
+				color = mix(color, pathTracing(r, 0.8), 1.0 / (i + 1));
 		}
 	}
-	color = color / spp * 8;
+	color *= 2;
+	color += r.material.emissive;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
 	color = mix(lastColor, color, 1.0 / float(frameCount + 1));

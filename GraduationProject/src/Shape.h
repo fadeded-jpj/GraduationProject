@@ -34,7 +34,7 @@ struct Material
 	float metallic = 0.0;
 
 	float specular = 0.3f;
-	float specularTint = 0.1f;
+	float specularTint = 0.5f;
 	float anisotropic = 0.0f;
 
 	float sheen = 0.0f;

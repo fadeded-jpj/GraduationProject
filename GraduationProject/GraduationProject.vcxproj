@@ -157,6 +157,9 @@
     <ClInclude Include="src\Setting.h" />
     <ClInclude Include="src\Shader.h" />
     <ClInclude Include="src\Shape.h" />
+    <ClInclude Include="src\tests\Test.h" />
+    <ClInclude Include="src\tests\TestClearColor.h" />
+    <ClInclude Include="src\tests\TestPathTracingPhoto.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\vendor\assimp\include\assimp\aabb.h" />
     <ClInclude Include="src\vendor\assimp\include\assimp\ai_assert.h" />
@@ -696,6 +699,9 @@
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Shader.cpp" />
     <ClCompile Include="src\Shape.cpp" />
+    <ClCompile Include="src\tests\Test.cpp" />
+    <ClCompile Include="src\tests\TestClearColor.cpp" />
+    <ClCompile Include="src\tests\TestPathTracingPhoto.cpp" />
     <ClCompile Include="src\texture.cpp" />
     <ClCompile Include="src\vendor\glm\detail\glm.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />

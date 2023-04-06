@@ -1170,6 +1170,15 @@
     <ClInclude Include="src\Model.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\tests\Test.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tests\TestClearColor.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tests\TestPathTracingPhoto.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vendor\glm\detail\func_common.inl">
@@ -1670,6 +1679,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\Model.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests\Test.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests\TestClearColor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests\TestPathTracingPhoto.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
