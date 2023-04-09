@@ -14,6 +14,14 @@
 #include "Shader.h"
 #include "Scene.h"
 
+#include "imgui/imgui.h"
+#include "imgui/imgui_impl_glfw.h"
+#include "imgui/imgui_impl_opengl3.h"
+
+#include "tests/TestPathTracingPhoto.h"
+#include "tests/TestClearColor.h"
+#include "tests/TestRealTimePathTracing.h"
+
 int main()
 {
     // glfw: initialize and configure
@@ -50,6 +58,7 @@ int main()
     }
     glViewport(0, 0, SCR_WIDTH, SCR_HEIGHT);
 
+    /*
     Shader shader("res/shaders/pathTracing.shader");
     shader.Bind();
     shader.SetUniform1i("lastFrame", 2);
@@ -95,15 +104,6 @@ int main()
     Sphere textSphere1({ 0,0.5,-5.5 }, 0.5, WHITE_MIRROR);
     Sphere textSphere2({ 1.5, -1,-6 }, 0.3, { 1.0, 1.0, 1.0 });
     Sphere textSphere3( {-1.3, -1, -6.5}, 0.4, { 0.3, 0.5, 1.0 });
-    //Sphere lightSphere({ 0, 2, -4 }, 1, { 1,1,1 });
-
-    //textSphere1.setEmissive(glm::vec3(1));
-    //lightSphere.setEmissive(glm::vec3(1.0));
-
-    //myScene.push(&textSphere1);
-    //myScene.push(&textSphere2);
-    //myScene.push(&textSphere3);
-    //myScene.push(&lightSphere);
     
     myScene.push(&PlaneBack);
     myScene.push(&PlaneDown);
@@ -116,59 +116,102 @@ int main()
     myScene.push(&textCube2);
 
     FrameBuffer myfbo;
+    */
 
-    // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
-    // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
-    
-    glEnable(GL_DEPTH_TEST);
-    
-    // 线框模型
-    //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-
-    // 背面剔除
-    //glEnable(GL_CULL_FACE);
-    //glCullFace(GL_FRONT);
-    //glCullFace(GL_BACK);
-
-    // render loop
-    // -----------
-
-    while (!glfwWindowShouldClose(window))
     {
-        float currentFrame = static_cast<float>(glfwGetTime());
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        glEnable(GL_DEPTH_TEST);
 
-        // input
-        // -----
-        processInput(window);
+        ImGui::CreateContext();
+        ImGui_ImplGlfw_InitForOpenGL(window, true);
+        ImGui::StyleColorsDark();
 
-        myfbo.Bind();
+        test::Test* currentTest = nullptr;
+        test::TestMenu* TestMenu = new test::TestMenu(currentTest);
+        currentTest = TestMenu;
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        TestMenu->RegisterTest<test::TestClearColor>("Clear Color");
+        TestMenu->RegisterTest<test::TestRenderPhoto>("pathTracing");
+        TestMenu->RegisterTest<test::TestRenderRealTime>("Real Time");
 
-        shader.Bind();
-        shader.SetUniformMat4f("projection", projection);
-        shader.SetUniformMat4f("view", view);
-        shader.SetUniform1i("frameCount", frameCount++);     
+        const char* glsl_version = "#version 330";
+        ImGui_ImplOpenGL3_Init(glsl_version);
 
-        // 渲染数据读入帧缓冲区
-        myfbo.BindTexture(2);
-        myScene.Render(shader);
-        myfbo.DrawBuffer(1);
-        
-        // 绘制缓冲区内容
-        myfbo.UnBind();
-        myfbo.Draw(fbShader);
-        
-        
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
-        // -------------------------------------------------------------------------------
-        glfwSwapBuffers(window);
-        glfwPollEvents();
+        // 线框模型
+        //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+        // 背面剔除
+        //glEnable(GL_CULL_FACE);
+        //glCullFace(GL_FRONT);
+        //glCullFace(GL_BACK);
+
+        // render loop
+        // -----------
+
+        while (!glfwWindowShouldClose(window))
+        {
+            // input
+            // -----
+            processInput(window);
+
+            /*
+            myfbo.Bind();
+
+            glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+            glm::mat4 view = camera.GetViewMatrix();
+
+            shader.Bind();
+            shader.SetUniformMat4f("projection", projection);
+            shader.SetUniformMat4f("view", view);
+            shader.SetUniform1i("frameCount", frameCount++);
+
+            // 渲染数据读入帧缓冲区
+            myfbo.BindTexture(2);
+            myScene.Render(shader);
+            myfbo.DrawBuffer(1);
+
+            // 绘制缓冲区内容
+            myfbo.UnBind();
+            myfbo.Draw(fbShader);
+            */
+
+
+            
+            ImGui_ImplOpenGL3_NewFrame();
+            ImGui_ImplGlfw_NewFrame();
+            ImGui::NewFrame();
+
+            if (currentTest)
+            {
+                currentTest->OnUpdate(0.0f);
+                currentTest->OnRender();
+                ImGui::Begin("Test");
+
+                if (currentTest != TestMenu && ImGui::Button("<-"))
+                {
+                    delete currentTest;
+                    currentTest = TestMenu;
+                }
+
+                currentTest->OnImGuiRender();
+                ImGui::End();
+            }
+
+            ImGui::Render();
+            ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+            // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+            // -------------------------------------------------------------------------------
+            glfwSwapBuffers(window);
+            glfwPollEvents();
+        }
+        delete currentTest;
+        if (currentTest != TestMenu)
+            delete TestMenu;
     }
+
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------

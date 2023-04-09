@@ -32,11 +32,11 @@ extern std::vector<glm::vec3> LightUp;
 extern const float PI;
 
 namespace test {
-	class TestRenderPhoto : public Test
+	class TestRenderRealTime : public Test
 	{
 	public:
-		TestRenderPhoto();
-		~TestRenderPhoto();
+		TestRenderRealTime();
+		~TestRenderRealTime();
 
 		void OnUpdate(float deltaTime) override;
 		void OnRender() override;
@@ -44,20 +44,13 @@ namespace test {
 
 	private:
 		std::unique_ptr<Shader> m_PathTracingShader;
-		std::unique_ptr<Shader> m_FrameShader;
-		std::unique_ptr<Shader> m_PBRShader;
-		std::unique_ptr<Shader> m_LightShader;
-		
 		std::unique_ptr<Scene> m_Scene;
-		std::unique_ptr<FrameBuffer> m_FBO;
 
 		std::vector<std::unique_ptr<Plane>> planes;
 		std::vector<std::unique_ptr<Cube>> cubes;
 		std::vector<std::unique_ptr<Sphere>> spheres;
 
-		glm::vec3 lightPos;
-
-		int spp = 64;
+		int spp = 8;
 		int frameCounter = 0;
 	};
 }

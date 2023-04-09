@@ -39,9 +39,9 @@ struct Material
 
 	float sheen = 0.0f;
 	float sheenTine = 0.0f;
-	float clearcoat = 0.5f;
+	float clearcoat = 0.1f;
 	
-	float clearcoatGloss = 1.0f;
+	float clearcoatGloss = 0.1f;
 	
 	Material(glm::vec3 color = glm::vec3(0),float roughness = 0.9f,float metallic = 0.0f, float specular = 0.3f)
 		:color(color), roughness(roughness), metallic(metallic), specular(specular) {}
@@ -125,6 +125,10 @@ class Plane : public shape
 {
 private:
 	std::vector<Triangle_encoded> triangles;
+	std::vector<float> vertices;
+	std::vector<GLuint> indices;
+
+	GLuint VAO, VBO, EBO;
 
 public:
 	std::vector<glm::vec3> points;
@@ -134,11 +138,11 @@ public:
 private:
 	void encodeData();
 public:
-	Plane(){}
+	Plane() {}
 	Plane(std::vector<glm::vec3> points, glm::vec3 normal, Material material);
-	~Plane(){}
+	~Plane();
 
-	void Draw(Shader& shader) {}
+	void Draw(Shader& shader);
 	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive) {}
 
@@ -166,7 +170,7 @@ public:
 	Cube(glm::vec3 center, Material material, float X = 0.5f, float Y = 0.5f, float Z = 0.5f, float rotateY = 0.0f);
 	~Cube() {}
 
-	void Draw(Shader& shader) {}
+	void Draw(Shader& shader);
 	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive) {}
 

@@ -25,7 +25,7 @@ unsigned int frameCount = 0;
 
 //-----------end------------------------
 
-const float PI = 3.14159265359;
+extern const float PI = 3.14159265359;
 
 //----------Connle Box DATA-----------------
 extern std::vector<glm::vec3> Left = {

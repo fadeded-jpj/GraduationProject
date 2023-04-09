@@ -496,10 +496,65 @@ void Plane::encodeData()
 Plane::Plane(std::vector<glm::vec3> p, glm::vec3 n, Material m)
     :normal(n), materal(m),points(p)
 {
+    indices = {
+        0,1,2,
+        0,2,3
+    };
     
+    for (auto& p : points)
+    {
+        vertices.push_back(p.x);
+        vertices.push_back(p.y);
+        vertices.push_back(p.z);
+    }
+
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    // …Ë÷√VAO£¨EBO
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+    
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
     encodeData();
 }
 
+Plane::~Plane()
+{
+    glDeleteVertexArrays(1, &VAO);
+    glDeleteBuffers(1, &VBO);
+    glDeleteBuffers(1, &EBO);
+}
+
+void Plane::Draw(Shader& shader)
+{
+    glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+    glm::mat4 view = camera.GetViewMatrix();
+
+    shader.Bind();
+    shader.SetUniformMat4f("projection", projection);
+    shader.SetUniformMat4f("view", view);
+    
+    shader.SetUniform3fv("Normal", normal);
+    shader.SetUniform3fv("camPos", camera.GetPosition());
+    
+    shader.SetUniform3fv("material.color", materal.color);
+    shader.SetUniform1f("material.metallic", materal.metallic);
+    shader.SetUniform1f("material.roughness", materal.roughness);
+    shader.SetUniform1f("material.ao", 0.5f);
+
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
+}
+    
 void Cube::encodeData() 
 {
     
@@ -573,4 +628,9 @@ Cube::Cube(glm::vec3 center, Material material, float X, float Y, float Z, float
         auto data = ps[i].getCodedData();
         triangles.insert(triangles.end(), data.begin(), data.end());
     }
+}
+
+void Cube::Draw(Shader& shader)
+{
+
 }

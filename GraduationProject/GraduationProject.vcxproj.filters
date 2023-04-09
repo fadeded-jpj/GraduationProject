@@ -1179,6 +1179,9 @@
     <ClInclude Include="src\tests\TestPathTracingPhoto.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\tests\TestRealTimePathTracing.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\vendor\glm\detail\func_common.inl">
@@ -1619,6 +1622,8 @@
       <Filter>头文件</Filter>
     </None>
     <None Include="res\shaders\lastframe.shader" />
+    <None Include="res\shaders\RealTime.shader" />
+    <None Include="res\shaders\rander.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">
@@ -1688,6 +1693,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\tests\TestPathTracingPhoto.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tests\TestRealTimePathTracing.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

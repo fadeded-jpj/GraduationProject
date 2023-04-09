@@ -160,6 +160,7 @@
     <ClInclude Include="src\tests\Test.h" />
     <ClInclude Include="src\tests\TestClearColor.h" />
     <ClInclude Include="src\tests\TestPathTracingPhoto.h" />
+    <ClInclude Include="src\tests\TestRealTimePathTracing.h" />
     <ClInclude Include="src\texture.h" />
     <ClInclude Include="src\vendor\assimp\include\assimp\aabb.h" />
     <ClInclude Include="src\vendor\assimp\include\assimp\ai_assert.h" />
@@ -542,6 +543,8 @@
     <None Include="res\shaders\lastframe.shader" />
     <None Include="res\shaders\pathTracing.shader" />
     <None Include="res\shaders\PBR.Shader" />
+    <None Include="res\shaders\rander.shader" />
+    <None Include="res\shaders\RealTime.shader" />
     <None Include="res\shaders\whitted.shader" />
     <None Include="src\vendor\assimp\include\assimp\color4.inl" />
     <None Include="src\vendor\assimp\include\assimp\material.inl" />
@@ -702,6 +705,7 @@
     <ClCompile Include="src\tests\Test.cpp" />
     <ClCompile Include="src\tests\TestClearColor.cpp" />
     <ClCompile Include="src\tests\TestPathTracingPhoto.cpp" />
+    <ClCompile Include="src\tests\TestRealTimePathTracing.cpp" />
     <ClCompile Include="src\texture.cpp" />
     <ClCompile Include="src\vendor\glm\detail\glm.cpp" />
     <ClCompile Include="src\vendor\imgui\imgui.cpp" />

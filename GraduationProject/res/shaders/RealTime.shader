@@ -10,8 +10,8 @@ uniform mat4 projection;
 
 void main()
 {
-	//gl_Position = projection * view * vec4(aPos, 1.0f);
-	gl_Position = vec4(aPos, 1.0f);
+	gl_Position = projection * view * vec4(aPos, 1.0f);
+	//gl_Position = vec4(aPos, 1.0f);
 
 	screenCoord = (vec2(aPos.x, aPos.y) + 1.0) / 2.0;
 	pix = aPos;
@@ -185,26 +185,7 @@ vec3 SampleCosHemisphere(vec3 normal, float x1, float x2)
 
 	float z = sqrt(1.0 - x * x - y * y);
 
-	vec3 L = toNormalHemisphere(vec3(x, y, z), normal);
-
-	return L;
-}
-
-vec3 SampleGTR1(vec3 V, vec3 N, float x1, float x2, float alpha)
-{
-	float phi_h = 2.0 * PI * x1;
-	float sin_phi_h = sin(phi_h);
-	float cos_phi_h = cos(phi_h);
-
-	float cos_theta_h = sqrt((1.0 - pow(alpha * alpha, 1.0 - x2)) / (1.0 - alpha * alpha));
-	float sin_theta_h = sqrt(max(0.0, 1.0 - cos_theta_h * cos_theta_h));
-
-	vec3 H = vec3(sin_theta_h * cos_phi_h, sin_theta_h * sin_phi_h, cos_theta_h);
-	H = toNormalHemisphere(H, N);   
-
-	vec3 L = reflect(-V, H);
-
-	return L;
+	return myMul(vec3(x, y, z), GetTangentSpace(normal));
 }
 
 vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
@@ -216,8 +197,9 @@ vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
 	float cos_theta_h = sqrt((1.0 - x2) / (1.0 + (alpha * alpha - 1.0) * x2));
 	float sin_theta_h = sqrt(max(0.0, 1.0 - cos_theta_h * cos_theta_h));
 
+	// 采样 "微平面" 的法向量 作为镜面反射的半角向量 h 
 	vec3 H = vec3(sin_theta_h * cos_phi_h, sin_theta_h * sin_phi_h, cos_theta_h);
-	H = toNormalHemisphere(H, N);   
+	H = toNormalHemisphere(H, N);   // 投影到真正的法向半球
 
 	vec3 L = reflect(-V, H);
 
@@ -226,33 +208,20 @@ vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
 
 vec3 SampleBRDF(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
 {
-	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha = max(0.01, material.roughness * material.roughness);
 
 	float r_diffuse = 1.0 - material.metallic;
 	float r_specular = 1.0;
-	float r_clearcoat = 0.25 * material.clearcoat;
 
-	float r_sum = r_diffuse + r_specular + r_clearcoat;
+	float r_sum = r_diffuse + r_specular;
 
 	float diffuseThreshold = r_diffuse / r_sum;
 	float specularThreshold = r_specular / r_sum;
-	float clearcoatThreshold = r_clearcoat / r_sum;
 
-	if (p <= diffuseThreshold) 
-	{
+	if (p < diffuseThreshold)
 		return SampleCosHemisphere(N, x1, x2);
-	}
-	else if (diffuseThreshold < p && p <= diffuseThreshold + specularThreshold) 
-	{
-		return SampleGTR2(V, N, x1, x2, alpha_GTR2);
-	}
-	else if (p > diffuseThreshold + specularThreshold) 
-	{
-		return SampleGTR1(V, N, x1, x2, alpha_GTR1);
-	}
-	
-	return vec3(0, 1, 0);
+	else
+		return SampleGTR2(V, N, x1, x2, alpha);
 }
 
 //==========================================
@@ -279,6 +248,19 @@ BVHNode getBVHNode(int i)
 // 与AABB求交
 float HitAABB(Ray r, vec3 AA, vec3 BB)
 {
+	//vec3 invDir = 1.0 / r.dir;
+	//
+	//vec3 rayIn = (AA - r.start) * invDir;
+	//vec3 rayOut = (BB - r.start) * invDir;
+
+	//vec3 tmax = max(rayIn, rayOut);
+	//vec3 tmin = min(rayIn, rayOut);
+
+	//float tenter = max(tmin.x, max(tmin.y, tmin.z));
+	//float texit = min(tmax.x, min(tmax.y, tmax.z));
+
+	//return tenter < texit && texit >= 0;
+
 	vec3 invdir = 1.0 / r.dir;
 
 	vec3 f = (BB - r.start) * invdir;
@@ -579,7 +561,7 @@ float SchlickFresnel(float u)
 float GTR1(float NdotH, float a) {
 	if (a >= 1) return 1 / PI;
 	float a2 = a * a;
-	float t = 1.0 + (a2 - 1) * NdotH * NdotH;
+	float t = 1 + (a2 - 1) * NdotH * NdotH;
 	return (a2 - 1) / (PI * log(a2) * t );
 }
 
@@ -592,7 +574,7 @@ float GTR2(float NdotH, float a) {
 float smithG_GGX(float NdotV, float alphaG) {
 	float a = alphaG * alphaG;
 	float b = NdotV * NdotV;
-	return 1 / (NdotV + sqrt(a + b - a * b));
+	return 1 / max(0.0, NdotV + sqrt(a + b - a * b));
 }
 
 vec3 mon2lin(vec3 x)
@@ -609,36 +591,26 @@ float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
 		return 0;
 
 	vec3 H = normalize(L + V);
-	float NdotH = max(0.01, dot(N, H));
+	float NdotH = max(0.0, dot(N, H));
 	float LdotH = max(0.01, dot(L, H));
 
-	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha = max(0.01, material.roughness * material.roughness);
+	float Ds = GTR2(NdotH, alpha);
+
+	float pdf_diffuse = NdotH / PI;
+	float pdf_specular = Ds * NdotH / (4.0 * LdotH);
 
 	// 计算概率
 	float r_diffuse = 1.0 - material.metallic;
 	float r_specular = 1.0;
-	float r_clearcoat = 0.25 * material.clearcoat;
 
-	float r_sum = r_diffuse + r_specular +r_clearcoat;
+	float r_sum = r_diffuse + r_specular;
 
 	float diffuseThreshold = r_diffuse / r_sum;
 	float specularThreshold = r_specular / r_sum;
-	float clearcoatThreshold = r_clearcoat / r_sum;
-
-	// 计算pdf
-	float Ds = GTR2(NdotH, alpha_GTR2);
-	float Dr = GTR1(NdotH, alpha_GTR1);
-
-	float pdf_diffuse = NdotL / PI;
-	float pdf_specular = Ds * NdotH / (4.0 * LdotH);
-	float pdf_clearcoat = Dr * NdotH / (4.0 * LdotH);
-
 
 	// 混合
-	float pdf = diffuseThreshold * pdf_diffuse
-		+ specularThreshold * pdf_specular;
-		+ clearcoatThreshold * pdf_clearcoat;
+	float pdf = diffuseThreshold * pdf_diffuse + specularThreshold * pdf_specular;
 	pdf = max(1e-10, pdf);
 
 	return pdf;
@@ -646,14 +618,14 @@ float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
 
 vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 {
-	float NdotL = dot(N, L);
-	float NdotV = dot(N, V);
+	float NdotL = max(0.01, dot(N, L));
+	float NdotV = max(0.01, dot(N, V));
 	if (NdotL < 0 || NdotV < 0)
 		return vec3(0);
 
 	vec3 H = normalize(L + V);
-	float NdotH = dot(N, H);
-	float LdotH = dot(L, H);
+	float NdotH = max(0.01, dot(N, H));
+	float LdotH = max(0.01, dot(L, H));
 	
 	vec3 Cdlin = mon2lin(material.baseColor);
 
@@ -685,14 +657,7 @@ vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 
 	vec3 specular = Gs * Fs * Ds;
 
-	// 清漆
-	float Dr = GTR1(NdotH, mix(0.1, 0.001, material.clearcoatGloss));
-	float Fr = mix(0.04, 1.0, FH);
-	float Gr = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
-	
-	vec3 clearcoat = vec3(0.25 * Gr * Fr * Dr * material.clearcoat);
-
-	return diffuse + specular + clearcoat;
+	return diffuse + specular;
 }
 
 //============================
@@ -725,13 +690,13 @@ vec3 pathTracing(HitResult hit, float RR) {
 		if (!newHit.isHit)
 			break;
 
-		float NdotL = dot(N, L);
+		float NdotL = dot(L, N);
 		if (NdotL <= 0.0) break;
 
 		vec3 f_r = Disney_BRDF(V, N, L, hit.material);
 		//vec3 f_r = PBR(V, N, L, hit.material);
 		float pdf = getPDF(V, N, L, hit.material);
-
+		
 		if (pdf <= 0.0) break;
 
 		vec3 Le = newHit.material.emissive;
@@ -739,10 +704,52 @@ vec3 pathTracing(HitResult hit, float RR) {
 		history *= f_r * NdotL / pdf;
 	
 		Lo += history * Le;
-		hit = newHit;	
+		hit = newHit;
 	}
 	return Lo / RR;
 }
+
+vec3 rayTracing(HitResult hit, int maxBounce) {
+	vec3 Lo = vec3(0);
+	vec3 history = vec3(1);
+
+	while (maxBounce > 0)
+	{
+		maxBounce--;
+
+		//vec3 wi = toNormalHemisphere(SampleHemisphereRand(), hit.normal);
+		vec3 wi = SampleHemisphere(hit.normal);
+
+		Ray ray;
+		ray.start = hit.HitPoint;
+		ray.dir = wi;
+
+		HitResult newHit = HitBVH(ray);
+		//HitResult newHit = HitArray(ray, 0, triangleCount - 1);
+
+		if (!newHit.isHit)
+			break;
+
+		float pdf = 1.0 / (2.0 * PI);                                   // 半球均匀采样概率密度
+		float cosine_o = max(0, dot(-hit.viewDir, hit.normal));         // 入射光和法线夹角余弦
+		float cosine_i = max(0, dot(ray.dir, hit.normal));				// 出射光和法线夹角余弦
+
+		vec3 V = -hit.viewDir;
+		vec3 N = hit.normal;
+
+		vec3 f_r = Disney_BRDF(V, N, wi, hit.material);
+		//vec3 f_r = PBR(V, N, wi, hit.material);
+
+		vec3 Le = newHit.material.emissive;
+		Lo += history * Le * f_r * cosine_i / (pdf);
+
+		hit = newHit;
+		history *= f_r * cosine_i / (pdf);
+
+	}
+	return Lo;
+}
+
 
 Ray CameraGetRay(Camera camera, vec2 offset)
 {
@@ -761,25 +768,31 @@ void main()
 	float v = screenCoord.y;
 	
 	Ray ray = CameraGetRay(camera, screenCoord);
+
+
+	//===========================
+	// TODO : fix BVH bug
+	//	BVH 传输？
+	//===========================
 	
 	HitResult r = HitBVH(ray);
+	//HitResult r = HitArray(ray, 0, triangleCount - 1);
 
 	vec3 color = vec3(0);
 	
 	for (int i = 0; i < spp; i++) {
 		if (r.isHit)
-		{		
+		{
 			if (i == 0)
-				color = pathTracing(r, 0.9);
+				color = pathTracing(r, 0.8);
 			else
-				color = mix(color, pathTracing(r, 0.9), 1.0 / (i + 1));
+				color = mix(color, pathTracing(r, 0.8), 1.0 / (i + 1));
 		}
 	}
-	color *= 4;
+	color *= 2;
 	color += r.material.emissive;
-	// 与上一拟合
-	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
-	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
+	
+	//color = vec3(r.material.specular);
 	
 	FragColor = vec4(color, 1);
 }
