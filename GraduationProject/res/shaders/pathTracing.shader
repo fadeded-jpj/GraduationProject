@@ -101,7 +101,8 @@ uniform mat4 cameraRotate;
 uniform int width;
 uniform int height;
 
-uniform int spp;
+uniform int mode;
+
 
 // ============= funcion ==================
 //=========================== Random =======================
@@ -252,6 +253,54 @@ vec3 SampleBRDF(float x1, float x2, float p, vec3 V, vec3 N, in Material materia
 		return SampleGTR1(V, N, x1, x2, alpha_GTR1);
 	}
 	
+	return vec3(0, 1, 0);
+}
+
+vec3 SampleBRDF_Clearcoat(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
+{
+	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
+
+	float r_diffuse = 1.0 - material.metallic;
+	float r_clearcoat = 0.25 * material.clearcoat;
+
+	float r_sum = r_diffuse + r_clearcoat;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float clearcoatThreshold = r_clearcoat / r_sum;
+
+	if (p <= diffuseThreshold)
+	{
+		return SampleCosHemisphere(N, x1, x2);
+	}
+	else if (p > diffuseThreshold)
+	{
+		return SampleGTR1(V, N, x1, x2, alpha_GTR1);
+	}
+
+	return vec3(0, 1, 0);
+}
+
+vec3 SampleBRDF_Specular(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
+{
+	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+
+	float r_diffuse = 1.0 - material.metallic;
+	float r_specular = 1.0;	
+
+	float r_sum = r_diffuse + r_specular;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float specularThreshold = r_specular / r_sum;
+
+	if (p <= diffuseThreshold)
+	{
+		return SampleCosHemisphere(N, x1, x2);
+	}
+	else if (diffuseThreshold < p) 
+	{
+		return SampleGTR2(V, N, x1, x2, alpha_GTR2);
+	}
+
 	return vec3(0, 1, 0);
 }
 
@@ -637,8 +686,82 @@ float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
 
 	// 混合
 	float pdf = diffuseThreshold * pdf_diffuse
-		+ specularThreshold * pdf_specular;
+		+ specularThreshold * pdf_specular
 		+ clearcoatThreshold * pdf_clearcoat;
+	pdf = max(1e-10, pdf);
+
+	return pdf;
+}
+
+float getPDF_Clearcoat(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return 0;
+
+	vec3 H = normalize(L + V);
+	float NdotH = max(0.01, dot(N, H));
+	float LdotH = max(0.01, dot(L, H));
+
+	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
+
+	// 计算概率
+	float r_diffuse = 1.0 - material.metallic;
+	float r_clearcoat = 0.25 * material.clearcoat;
+
+	float r_sum = r_diffuse + r_clearcoat;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float clearcoatThreshold = r_clearcoat / r_sum;
+
+	// 计算pdf
+	float Dr = GTR1(NdotH, alpha_GTR1);
+
+	float pdf_diffuse = NdotL / PI;
+	float pdf_clearcoat = Dr * NdotH / (4.0 * LdotH);
+
+	// 混合
+	float pdf = diffuseThreshold * pdf_diffuse
+		+ clearcoatThreshold * pdf_clearcoat;
+	pdf = max(1e-10, pdf);
+
+	return pdf;
+}
+
+float getPDF_Specular(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return 0;
+
+	vec3 H = normalize(L + V);
+	float NdotH = max(0.01, dot(N, H));
+	float LdotH = max(0.01, dot(L, H));
+
+	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+
+	// 计算概率
+	float r_diffuse = 1.0 - material.metallic;
+	float r_specular = 1.0;
+
+	float r_sum = r_diffuse + r_specular;
+
+	float diffuseThreshold = r_diffuse / r_sum;
+	float specularThreshold = r_specular / r_sum;
+
+	// 计算pdf
+	float Ds = GTR2(NdotH, alpha_GTR2);
+
+	float pdf_diffuse = NdotL / PI;
+	float pdf_specular = Ds * NdotH / (4.0 * LdotH);
+
+
+	// 混合
+	float pdf = diffuseThreshold * pdf_diffuse
+		+ specularThreshold * pdf_specular;
+
 	pdf = max(1e-10, pdf);
 
 	return pdf;
@@ -695,6 +818,115 @@ vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 	return diffuse + specular + clearcoat;
 }
 
+vec3 Disney_BRDF_Clearcoat(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return vec3(0);
+
+	vec3 H = normalize(L + V);
+	float NdotH = dot(N, H);
+	float LdotH = dot(L, H);
+
+	vec3 Cdlin = mon2lin(material.baseColor);
+
+	// diffuse
+	float Fd90 = 0.5 + 2.0 * material.roughness * LdotH * LdotH;
+	float FL = schlickFresnel(NdotL);
+	float FV = schlickFresnel(NdotV);
+
+	float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+	float Fss90 = LdotH * LdotH * material.roughness;
+	float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+	float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
+
+	vec3 diffuse = Cdlin / PI * mix(Fd, ss, material.subsurface) * (1 - material.metallic);
+
+	// 清漆
+	float FH = SchlickFresnel(LdotH);
+	float Dr = GTR1(NdotH, mix(0.1, 0.001, material.clearcoatGloss));
+	float Fr = mix(0.04, 1.0, FH);
+	float Gr = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
+
+	vec3 clearcoat = vec3(0.25 * Gr * Fr * Dr * material.clearcoat);
+
+	return diffuse + clearcoat;
+}
+
+vec3 Disney_BRDF_Specular(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return vec3(0);
+
+	vec3 H = normalize(L + V);
+	float NdotH = dot(N, H);
+	float LdotH = dot(L, H);
+
+	vec3 Cdlin = mon2lin(material.baseColor);
+
+	// diffuse
+	float Fd90 = 0.5 + 2.0 * material.roughness * LdotH * LdotH;
+	float FL = schlickFresnel(NdotL);
+	float FV = schlickFresnel(NdotV);
+
+	float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+	float Fss90 = LdotH * LdotH * material.roughness;
+	float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+	float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
+
+	vec3 diffuse = Cdlin / PI * mix(Fd, ss, material.subsurface) * (1 - material.metallic);
+
+	// specular
+	float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z;
+	vec3 Ctint = (Cdlum) > 0 ? (Cdlin / Cdlum) : vec3(1);
+	vec3 Cspec = material.specular * mix(vec3(1), Ctint, material.specularTint);
+	vec3 Cspec0 = mix(0.08 * Cspec, Cdlin, material.metallic);
+
+	float alpha = material.roughness * material.roughness;
+	float Ds = GTR2(NdotH, alpha);
+	float FH = SchlickFresnel(LdotH);
+	vec3 Fs = mix(Cspec0, vec3(1), FH);
+	float Gs = smithG_GGX(NdotL, material.roughness);
+	Gs *= smithG_GGX(NdotV, material.roughness);
+
+	vec3 specular = Gs * Fs * Ds;
+
+	return diffuse + specular;
+}
+
+vec3 Disney_BRDF_Diffuse(vec3 V, vec3 N, vec3 L, in Material material)
+{
+	float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	if (NdotL < 0 || NdotV < 0)
+		return vec3(0);
+
+	vec3 H = normalize(L + V);
+	float NdotH = dot(N, H);
+	float LdotH = dot(L, H);
+
+	vec3 Cdlin = mon2lin(material.baseColor);
+
+	// diffuse
+	float Fd90 = 0.5 + 2.0 * material.roughness * LdotH * LdotH;
+	float FL = schlickFresnel(NdotL);
+	float FV = schlickFresnel(NdotV);
+
+	float Fd = mix(1.0, Fd90, FL) * mix(1.0, Fd90, FV);
+
+	float Fss90 = LdotH * LdotH * material.roughness;
+	float Fss = mix(1.0, Fss90, FL) * mix(1.0, Fss90, FV);
+	float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
+
+	vec3 diffuse = Cdlin / PI * mix(Fd, ss, material.subsurface) * (1 - material.metallic);
+
+	return diffuse;
+}
 //============================
 vec3 pathTracing(HitResult hit, float RR) {
 	vec3 Lo = vec3(0);
@@ -714,7 +946,41 @@ vec3 pathTracing(HitResult hit, float RR) {
 		float x2 = rand();
 		float x3 = rand();
 
-		vec3 L = SampleBRDF(x1, x2, x3, V, N, hit.material);
+		vec3 L = vec3(0);
+		vec3 f_r = vec3(0);
+		float NdotL = 0;
+		float pdf = 1;
+
+		if (mode == 0)
+		{
+			L = SampleCosHemisphere(N, x1, x2);
+			f_r = Disney_BRDF_Diffuse(V, N, L, hit.material);
+
+			NdotL = dot(N, L);
+			if (NdotL <= 0.0) break;
+
+			pdf = NdotL / PI;
+		}
+		else if (mode == 1)
+		{
+			L = SampleBRDF_Specular(x1, x2, x3, V, N, hit.material);
+			f_r = Disney_BRDF_Specular(V, N, L, hit.material);
+			
+			NdotL = dot(N, L);
+			if (NdotL <= 0.0) break;
+
+			pdf = getPDF_Specular(V, N, L, hit.material);
+		}
+		else 
+		{
+			L = SampleBRDF(x1, x2, x3, V, N, hit.material);
+			f_r = Disney_BRDF(V, N, L, hit.material);
+
+			NdotL = dot(N, L);
+			if (NdotL <= 0.0) break;
+
+			pdf = getPDF(V, N, L, hit.material);
+		}
 
 		Ray ray;
 		ray.start = hit.HitPoint;
@@ -725,12 +991,6 @@ vec3 pathTracing(HitResult hit, float RR) {
 		if (!newHit.isHit)
 			break;
 
-		float NdotL = dot(N, L);
-		if (NdotL <= 0.0) break;
-
-		vec3 f_r = Disney_BRDF(V, N, L, hit.material);
-		//vec3 f_r = PBR(V, N, L, hit.material);
-		float pdf = getPDF(V, N, L, hit.material);
 
 		if (pdf <= 0.0) break;
 
@@ -743,6 +1003,7 @@ vec3 pathTracing(HitResult hit, float RR) {
 	}
 	return Lo / RR;
 }
+
 
 Ray CameraGetRay(Camera camera, vec2 offset)
 {
@@ -764,18 +1025,13 @@ void main()
 	
 	HitResult r = HitBVH(ray);
 
-	vec3 color = vec3(0);
+	vec3 color = vec3(0);	
 	
-	for (int i = 0; i < spp; i++) {
-		if (r.isHit)
-		{		
-			if (i == 0)
-				color = pathTracing(r, 0.9);
-			else
-				color = mix(color, pathTracing(r, 0.9), 1.0 / (i + 1));
-		}
+	if (r.isHit)
+	{	
+		color = pathTracing(r, 0.8);
 	}
-	color *= 4;
+
 	color += r.material.emissive;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;

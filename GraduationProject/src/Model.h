@@ -1,6 +1,7 @@
 #pragma once
 #include "Mesh.h"
 #include "Shader.h"
+#include "Shape.h"
 
 #include <vector>
 #include <string>
@@ -10,8 +11,7 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-
-class Model
+class Model: public shape
 {
 private:
 	std::vector<Mesh> m_Meshes;
@@ -19,17 +19,24 @@ private:
 
 	std::unordered_set<std::string> m_Textures_loaded;
 
+	std::vector<Triangle_encoded> triangles;
+
 public:
 	Model(const std::string& filePath);
 	~Model() {}
 
-	void Draw(Shader shader);
+	HitResult intersect(Ray ray) { return HitResult(); }
+	void Draw(Shader& shader);
+	std::vector<Triangle_encoded> getCodedData() { return triangles; }
+	void setEmissive(glm::vec3 emissive) {}
 
 private:
 	void loadModel(const std::string path);
 	void processNode(aiNode* node, const aiScene* scene);
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 	std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
+
+	void encodedData();
 };
 
 unsigned int TextureFromFile(const std::string& path, const std::string& directory, bool gamma = false);

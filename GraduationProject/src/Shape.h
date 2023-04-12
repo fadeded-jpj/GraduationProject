@@ -126,9 +126,9 @@ class Plane : public shape
 private:
 	std::vector<Triangle_encoded> triangles;
 	std::vector<float> vertices;
-	std::vector<GLuint> indices;
+	std::vector<unsigned int> indices;
 
-	GLuint VAO, VBO, EBO;
+	unsigned int VAO, VBO, EBO;
 
 public:
 	std::vector<glm::vec3> points;

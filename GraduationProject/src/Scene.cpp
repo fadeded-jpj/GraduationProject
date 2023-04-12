@@ -136,6 +136,7 @@ void Scene::Render(Shader& shader)
 
 
 	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
 
 	glBindVertexArray(0);
@@ -149,16 +150,7 @@ void Scene::Draw(Shader& shader)
 		initTrianglesData();
 		initBVHData();
 	}
-	shader.SetUniform1i("triangles", 0);
-	shader.SetUniform1i("bvh", 1);
-
-	shader.SetUniform1i("triangleCount", trianglesData.size());
-	shader.SetUniform1i("BVHCount", BVHData.size());
-
-	shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
-	shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
-	shader.SetUniform3fv("camera.origin", camera.GetPosition());
-	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
+	
 
 	for (auto& m : models)
 	{

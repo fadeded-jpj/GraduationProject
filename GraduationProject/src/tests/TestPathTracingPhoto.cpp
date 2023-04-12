@@ -23,7 +23,6 @@ test::TestRenderPhoto::TestRenderPhoto()
 	m_PathTracingShader->SetUniform1i("lastFrame", 2);
 	m_PathTracingShader->SetUniform1i("width", SCR_WIDTH);
 	m_PathTracingShader->SetUniform1i("height", SCR_HEIGHT);
-	m_PathTracingShader->SetUniform1i("spp", spp);
 
 	m_FrameShader = std::make_unique<Shader>("res/shaders/lastframe.shader");
 	m_FrameShader->Bind();
@@ -45,15 +44,18 @@ test::TestRenderPhoto::TestRenderPhoto()
 	planes.push_back(std::make_unique<Plane>(Back, glm::vec3(0, 0, -1), WHITE_MIRROR));
 	planes.push_back(std::make_unique<Plane>(LightUp, glm::vec3(0, -1, 0), LightMaterial));
 
-
-
 	// cube
 	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -7.0), CYAN));
 	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
 
+	WHITE.roughness = 0.3f;
+
 	// sphere
-	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(0, 0.5, -5.5), 0.5, WHITE_MIRROR);
+	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(-1.0, 0.5, -5.0), 0.3, WHITE));
 	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(1.5, -1, -6), 0.3, WHITE));
+
+	// model
+	models.push_back(std::make_unique<Model>(modelPath));
 
 	// ³¡¾°
 	m_Scene = std::make_unique<Scene>();
@@ -64,6 +66,8 @@ test::TestRenderPhoto::TestRenderPhoto()
 		m_Scene->push(cube.get());
 	for (auto& sphere : spheres)
 		m_Scene->push(sphere.get());
+	for (auto& model : models)
+		m_Scene->push(model.get());
 	
 	// Ö¡»º³åÇø
 	m_FBO = std::make_unique<FrameBuffer>();
@@ -85,16 +89,27 @@ void test::TestRenderPhoto::OnRender()
 
 	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	//glClear(GL_COLOR_BUFFER_BIT);
-	//
-	//for (int i = 0; i < planes.size() - 1; i++)
-	//{
-	//	planes[i]->Draw(*m_PBRShader);
-	//}
-	planes[planes.size() - 1]->Draw(*m_LightShader);
+	//m_LightShader->Bind();
+	//planes[0]->Draw(*m_LightShader);
 
+	if (lastMode != currentMode)
+	{
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		frameCounter = 0;
+	}
+
+
+	m_PathTracingShader->Bind();
+	m_PathTracingShader->SetUniform1i("mode", currentMode);
 
 	m_FBO->Bind();
-	
+	if (lastMode != currentMode)
+	{
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
 	m_PathTracingShader->Bind();
 	m_PathTracingShader->SetUniform1i("frameCount", frameCounter++);
 	
@@ -106,10 +121,20 @@ void test::TestRenderPhoto::OnRender()
 	// »æÖÆ»º³åÇøÄÚÈÝ
 	m_FBO->UnBind();
 	m_FBO->Draw(*m_FrameShader);
+
+	lastMode = currentMode;
 }
 
 void test::TestRenderPhoto::OnImGuiRender()
 {
 	ImGui::SliderInt("spp", &spp, 1, 128);
+	
+	if (ImGui::Button("Diffuse"))
+		currentMode = Mode::Diffuse;
+	if (ImGui::Button("Specular"))
+		currentMode = Mode::Specular;
+	if (ImGui::Button("All"))
+		currentMode = Mode::All;
+
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 }

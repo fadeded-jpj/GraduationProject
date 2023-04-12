@@ -47,7 +47,7 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glad: load all OpenGL function pointers
     // ---------------------------------------
@@ -136,6 +136,76 @@ int main()
         const char* glsl_version = "#version 330";
         ImGui_ImplOpenGL3_Init(glsl_version);
 
+        /*
+        ////=================test==================================================
+        //std::vector<Plane> planes;
+        //Material LightMaterial({ 1,1,1 });
+        //LightMaterial.emissive = glm::vec3(1.0f);
+
+        //glm::vec3 lightPos;
+        //for (auto& v : LightUp)
+        //{
+        //    lightPos += v;
+        //}
+        //lightPos /= 4.0f;
+
+        //planes.push_back(Plane(Left, glm::vec3(-1, 0, 0), RED));
+        ////planes.push_back(Plane(Right, glm::vec3(-1, 0, 0), GREEN));
+        ////planes.push_back(Plane(Up, glm::vec3(0, -1, 0), WHITE));
+        ////planes.push_back(Plane(Down, glm::vec3(0, -1, 0), WHITE));
+        ////planes.push_back(Plane(Back, glm::vec3(0, 0, -1), WHITE_MIRROR));
+
+        //Shader shader("res/shaders/basic.shader");
+
+        //
+        //float vertices[] =
+        //{
+        //    -2,-2,-3,
+        //    -2, 2,-3,
+        //    -2, 2,-8,
+        //    -2,-2,-8
+        //};
+
+        //
+        ////float vertices[] =
+        ////{
+        ////    -0.5f, -0.5f, -0.5f,
+        ////     0.5f, -0.5f, -0.5f,
+        ////     0.5f,  0.5f, -0.5f,                      
+        ////    -0.5f,  0.5f, -0.5f
+        ////
+        ////};
+
+        //unsigned int indices[] =
+        //{
+        //    0,1,2,
+        //    2,3,0
+        //};
+
+        //GLuint VAO, VBO, EBO;
+
+        //glGenVertexArrays(1, &VAO);
+        //glGenBuffers(1, &VBO);
+        //glGenBuffers(1, &EBO);
+        //
+
+        //// 设置VAO，EBO
+        //glBindVertexArray(VAO);
+        //glBindBuffer(GL_ARRAY_BUFFER, VBO);
+        //glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+        //glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+        //glEnableVertexAttribArray(0);
+        //glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+        //
+        //glBindVertexArray(0);
+        //glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+        //glBindBuffer(GL_ARRAY_BUFFER, 0);
+        ////========================================================================
+        */
+
         // 线框模型
         //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -198,6 +268,7 @@ int main()
 
             ImGui::Render();
             ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+            
 
             // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
             // -------------------------------------------------------------------------------

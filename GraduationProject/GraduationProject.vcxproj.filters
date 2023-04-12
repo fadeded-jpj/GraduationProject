@@ -1624,6 +1624,7 @@
     <None Include="res\shaders\lastframe.shader" />
     <None Include="res\shaders\RealTime.shader" />
     <None Include="res\shaders\rander.shader" />
+    <None Include="res\obj\HuTao\HuTao.pmx" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">
@@ -1698,5 +1699,25 @@
     <ClCompile Include="src\tests\TestRealTimePathTracing.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="res\obj\HuTao\hair.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\obj\HuTao\skin.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\obj\HuTao\toon_defo.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\obj\HuTao\tex\cloths.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\obj\HuTao\tex\face.png">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="res\obj\HuTao\tex\hair.png">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
 </Project>

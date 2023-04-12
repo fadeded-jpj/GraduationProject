@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "Shape.h"
+
 struct Vertex {
 	glm::vec3 Position;
 	glm::vec3 Normal;
@@ -30,11 +32,15 @@ private:
 	unsigned int m_VBO;
 	unsigned int m_IBO;
 
+	std::vector<Triangle_encoded> triangles;
+
 	void setupMesh();
+	void encodeTriangle();
 
 public:
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures);
 	~Mesh() {}
 
 	void Draw(Shader shader);
+	std::vector<Triangle_encoded> getTriangleData() { return triangles; }
 };

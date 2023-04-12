@@ -3,6 +3,7 @@
 #include "Test.h"
 #include "../Scene.h"
 #include "../Shape.h"
+#include "../Model.h"
 
 #include<memory>
 
@@ -32,6 +33,12 @@ extern std::vector<glm::vec3> LightUp;
 extern const float PI;
 
 namespace test {
+	enum Mode {
+		Diffuse,
+		Specular,
+		All
+	};
+
 	class TestRenderPhoto : public Test
 	{
 	public:
@@ -54,10 +61,15 @@ namespace test {
 		std::vector<std::unique_ptr<Plane>> planes;
 		std::vector<std::unique_ptr<Cube>> cubes;
 		std::vector<std::unique_ptr<Sphere>> spheres;
+		std::vector<std::unique_ptr<Model>> models;
 
 		glm::vec3 lightPos;
 
-		int spp = 64;
+		int spp = 1;
 		int frameCounter = 0;
+		std::string modelPath = "res/obj/HuTao/HuTao.pmx";
+		
+		Mode currentMode = Mode::Diffuse;
+		Mode lastMode = currentMode;
 	};
 }

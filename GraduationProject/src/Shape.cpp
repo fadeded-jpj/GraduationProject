@@ -494,7 +494,7 @@ void Plane::encodeData()
 }
 
 Plane::Plane(std::vector<glm::vec3> p, glm::vec3 n, Material m)
-    :normal(n), materal(m),points(p)
+    :normal(n), materal(m),points(p),VAO(0),VBO(0),EBO(0)
 {
     indices = {
         0,1,2,
@@ -508,20 +508,12 @@ Plane::Plane(std::vector<glm::vec3> p, glm::vec3 n, Material m)
         vertices.push_back(p.z);
     }
 
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    //for (int i = 0; i < vertices.size(); i += 3)
+    //{
+    //    std::cout << vertices[i] << "," << vertices[i + 1] << "," << vertices[i + 2] << std::endl;
+    //}
 
-    // ÉèÖÃVAO£¬EBO
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
     
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
-
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
     encodeData();
 }
@@ -535,8 +527,30 @@ Plane::~Plane()
 
 void Plane::Draw(Shader& shader)
 {
+    glGenVertexArrays(1, &VAO);
+    glGenBuffers(1, &VBO);
+    glGenBuffers(1, &EBO);
+
+    // ÉèÖÃVAO£¬EBO
+    glBindVertexArray(VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(GLuint), &indices[0], GL_STATIC_DRAW);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
     glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     glm::mat4 view = camera.GetViewMatrix();
+
+    std::cout << "    plane" << std::endl;
+    for (int i = 0; i < vertices.size(); i += 3)
+    {
+        std::cout << vertices[i] << "," << vertices[i + 1] << "," << vertices[i + 2] << std::endl;
+    }
+
 
     shader.Bind();
     shader.SetUniformMat4f("projection", projection);
@@ -550,9 +564,13 @@ void Plane::Draw(Shader& shader)
     shader.SetUniform1f("material.roughness", materal.roughness);
     shader.SetUniform1f("material.ao", 0.5f);
 
+    std::cout << "vertices size: " << vertices.size() << std::endl;
+    std::cout << "indices size: " << indices.size() << std::endl << std::endl;
+
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
+    glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 }
     
 void Cube::encodeData() 
