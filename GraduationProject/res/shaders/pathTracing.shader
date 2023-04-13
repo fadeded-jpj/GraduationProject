@@ -148,7 +148,7 @@ float sdot(vec3 x, vec3 y, float f = 1.0f)
 mat3 GetTangentSpace(vec3 N)
 {
 	vec3 helper = vec3(1, 0, 0);
-	if (abs(N.x) > 0.99)
+	if (abs(N.x) > 0.999)
 		helper = vec3(0, 0, 1);
 	
 	vec3 tangent = normalize(cross(N, helper));
@@ -228,7 +228,7 @@ vec3 SampleGTR2(vec3 V, vec3 N, float x1, float x2, float alpha)
 vec3 SampleBRDF(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
 {
 	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha_GTR2 = max(0.001, material.roughness * material.roughness);
 
 	float r_diffuse = 1.0 - material.metallic;
 	float r_specular = 1.0;
@@ -282,7 +282,7 @@ vec3 SampleBRDF_Clearcoat(float x1, float x2, float p, vec3 V, vec3 N, in Materi
 
 vec3 SampleBRDF_Specular(float x1, float x2, float p, vec3 V, vec3 N, in Material material)
 {
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha_GTR2 = max(0.001, material.roughness * material.roughness);
 
 	float r_diffuse = 1.0 - material.metallic;
 	float r_specular = 1.0;	
@@ -390,14 +390,6 @@ Material getMaterial(int i) {
 // 光线和三角形相交
 HitResult HitTriangle(Triangle t, Ray ray)
 {
-	//bool isHit;
-	//bool isInside;
-	//float distance;
-	//vec3 HitPoint;
-	//vec3 normal;
-	//vec3 viewDir;
-	//Material material;
-
 	HitResult res;
 
 	res.isHit = false;
@@ -425,7 +417,7 @@ HitResult HitTriangle(Triangle t, Ray ray)
 
 	// 求交点
 	float T = (dot(N, p1) - dot(S, N)) / dot(D, N);
-	if (T < 0.0005f) return res;
+	if (T < 0.0001f) return res;
 
 	// 交点
 	vec3 P = S + D * T;
@@ -434,8 +426,8 @@ HitResult HitTriangle(Triangle t, Ray ray)
 	vec3 c1 = cross(p2 - p1, P - p1);
 	vec3 c2 = cross(p3 - p2, P - p2);
 	vec3 c3 = cross(p1 - p3, P - p3);
-	bool res1 = (dot(c1, N) > 0 && dot(c2, N) > 0 && dot(c3, N) > 0);
-	bool res2 = (dot(c1, N) < 0 && dot(c2, N) < 0 && dot(c3, N) < 0);
+	bool res1 = (dot(c1, N) >= 0 && dot(c2, N) >= 0 && dot(c3, N) >= 0);
+	bool res2 = (dot(c1, N) <= 0 && dot(c2, N) <= 0 && dot(c3, N) <= 0);
 
 	//命中
 	if (res1 || res2)
@@ -662,7 +654,7 @@ float getPDF(vec3 V, vec3 N, vec3 L, in Material material)
 	float LdotH = max(0.01, dot(L, H));
 
 	float alpha_GTR1 = mix(0.1, 0.001, material.clearcoatGloss);
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha_GTR2 = max(0.001, material.roughness * material.roughness);
 
 	// 计算概率
 	float r_diffuse = 1.0 - material.metallic;
@@ -740,7 +732,7 @@ float getPDF_Specular(vec3 V, vec3 N, vec3 L, in Material material)
 	float NdotH = max(0.01, dot(N, H));
 	float LdotH = max(0.01, dot(L, H));
 
-	float alpha_GTR2 = max(0.01, material.roughness * material.roughness);
+	float alpha_GTR2 = max(0.001, material.roughness * material.roughness);
 
 	// 计算概率
 	float r_diffuse = 1.0 - material.metallic;
@@ -799,7 +791,7 @@ vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 	vec3 Cspec = material.specular * mix(vec3(1), Ctint, material.specularTint);
 	vec3 Cspec0 = mix(0.08 * Cspec, Cdlin, material.metallic);
 	
-	float alpha = material.roughness * material.roughness;
+	float alpha = max(0.001, material.roughness * material.roughness);
 	float Ds = GTR2(NdotH, alpha);
 	float FH = SchlickFresnel(LdotH);
 	vec3 Fs = mix(Cspec0, vec3(1), FH);
@@ -887,7 +879,7 @@ vec3 Disney_BRDF_Specular(vec3 V, vec3 N, vec3 L, in Material material)
 	vec3 Cspec = material.specular * mix(vec3(1), Ctint, material.specularTint);
 	vec3 Cspec0 = mix(0.08 * Cspec, Cdlin, material.metallic);
 
-	float alpha = material.roughness * material.roughness;
+	float alpha = max(0.001, material.roughness * material.roughness);
 	float Ds = GTR2(NdotH, alpha);
 	float FH = SchlickFresnel(LdotH);
 	vec3 Fs = mix(Cspec0, vec3(1), FH);
