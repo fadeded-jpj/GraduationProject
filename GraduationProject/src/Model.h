@@ -37,6 +37,7 @@ private:
 	std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
 	void encodedData();
+	glm::vec3 getTexColor(const unsigned char* data, glm::vec2 uv, int w, int h, int nr);
 };
 
 unsigned int TextureFromFile(const std::string& path, const std::string& directory, bool gamma = false);

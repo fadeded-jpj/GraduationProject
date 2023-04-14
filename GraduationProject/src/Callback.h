@@ -35,11 +35,15 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
-    if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
-        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-        return;
-    }
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    //if (glfwGetKey(window, GLFW_KEY_TAB) == GLFW_PRESS) {
+    //    mouse = !mouse;
+    //    if(mouse)
+    //        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    //    else 
+    //        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    //    return;
+    //}
     float xpos = static_cast<float>(xposIn);
     float ypos = static_cast<float>(yposIn);
 

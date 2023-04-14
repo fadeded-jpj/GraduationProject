@@ -3,6 +3,10 @@
 #include "glad/glad.h"
 #include "GLFW/glfw3.h"
 
+#include "stb_image/stb_image.h"
+
+#include <iostream>
+
 void Mesh::setupMesh()
 {
 	glGenVertexArrays(1, &m_VAO);
@@ -70,24 +74,31 @@ void Mesh::encodeTriangle()
 	int indicesNum = m_Indices.size();
 	for (int i = 2; i < indicesNum; i += 3)
 	{
+		//std::cout << m_Vertices.size() << std::endl << m_Textures.size() << std::endl;
+
 		Triangle_encoded t;
 		Material m;
-		t.p1 = m_Vertices[i - 2].Position * 0.1f + glm::vec3(1, -2, -5);
+		t.p1 = m_Vertices[i - 2].Position * 0.1f + glm::vec3(0, -2, -5.0);
 		t.n1 = -1.0f * m_Vertices[i - 2].Normal;
 
-		t.p2 = m_Vertices[i - 1].Position * 0.1f + glm::vec3(1, -2, -5);
+		t.p2 = m_Vertices[i - 1].Position * 0.1f + glm::vec3(0, -2, -5.0);
 		t.n2 = -1.0f * m_Vertices[i - 1].Normal;
 
-		t.p3 = m_Vertices[i].Position * 0.1f + glm::vec3(1, -2, -5);
+		t.p3 = m_Vertices[i].Position * 0.1f + glm::vec3(0, -2, -5.0);
 		t.n3 = -1.0f * m_Vertices[i].Normal;
 
 		t.baseColor = glm::vec3(1.0f);
 		t.emissive = glm::vec3(0);
 		t.param1 = glm::vec3(0.9f, 0.9f, 0.1f);
-		t.param2 = glm::vec3(0.5f);
-		t.param3 = glm::vec3(0.5f);
-		t.param4 = glm::vec3(0.5f);
+		t.param2 = glm::vec3(0.1f);
+		t.param3 = glm::vec3(0.1f);
+		t.param4 = glm::vec3(0.1f);
 
 		triangles.push_back(t);
+
+		glm::vec2 uv = (m_Vertices[i - 2].TexCoords + m_Vertices[i - 1].TexCoords + m_Vertices[i].TexCoords) / glm::vec2(3);
+		textureCoords.push_back(uv);
+		
 	}
 }
+

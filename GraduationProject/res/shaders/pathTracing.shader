@@ -1023,11 +1023,12 @@ void main()
 	{	
 		color = pathTracing(r, 0.8);
 	}
-
 	color += r.material.emissive;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
 	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
 	
+	//color = r.material.baseColor;
+
 	FragColor = vec4(color, 1);
 }

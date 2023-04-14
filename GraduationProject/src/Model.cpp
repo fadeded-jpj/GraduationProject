@@ -176,9 +176,52 @@ unsigned int TextureFromFile(const std::string& path, const std::string& directo
 
 void Model::encodedData()
 {
+
+    std::string filename;
+    unsigned char* data = nullptr;
+    int width, height, nrComponents;
+
     for (auto& m : m_Meshes)
     {
-        auto data = m.getTriangleData();
-        triangles.insert(triangles.end(), data.begin(), data.end());
+        auto TriangleData = m.getTriangleData();
+        auto TexData = m.getTextureCoords();
+
+        if (m.m_Textures.size() > 0) {
+            filename = m.m_Textures[0].path.C_Str();
+            filename = m_Directory + '/' + filename;
+            //std::cout << "texture path£º" << filename << std::endl;
+            data = stbi_load(filename.c_str(), &width, &height, &nrComponents, 0);
+        }
+
+        int n = TriangleData.size();
+
+        //std::cout << "UV: (" << TexData[0].x << "," << TexData[0].y << ")" << std::endl;
+
+        for (int i = 0; i < n; i++)
+        {
+            auto& t = TriangleData[i];
+
+            if (data != nullptr)
+            {
+                auto& uv = TexData[i];
+
+                t.baseColor = getTexColor(data, uv, width, height, nrComponents);
+            }
+            triangles.push_back(t);
+        }
     }
+}
+
+glm::vec3 Model::getTexColor(const unsigned char* data, glm::vec2 uv, int w, int h, int nr)
+{
+    glm::vec3 res = glm::vec3(1.0);
+
+    int n = sizeof(data) / (h * sizeof(unsigned int));
+    int idx = (int)((uv.x) * h + (uv.y) * h * w);
+
+    res.r = data[nr * idx] / 255.0;
+    res.g = data[nr * idx + 1] / 255.0;
+    res.b = data[nr * idx + 2] / 255.0;
+
+    return res;
 }

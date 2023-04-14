@@ -12,6 +12,7 @@
 extern const unsigned int SCR_WIDTH = 1200;
 extern const unsigned int SCR_HEIGHT = 1200;
 
+extern bool mouse = true;
 
 //----------camera settings------------
 extern Camera camera(glm::vec3(0.0f, 0.0f, 4.0f));
