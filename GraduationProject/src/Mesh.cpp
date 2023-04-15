@@ -78,13 +78,13 @@ void Mesh::encodeTriangle()
 
 		Triangle_encoded t;
 		Material m;
-		t.p1 = m_Vertices[i - 2].Position * 0.1f + glm::vec3(0, -2, -5.0);
+		t.p1 = m_Vertices[i - 2].Position * 0.1f + glm::vec3(1, -2, -6.0);
 		t.n1 = -1.0f * m_Vertices[i - 2].Normal;
 
-		t.p2 = m_Vertices[i - 1].Position * 0.1f + glm::vec3(0, -2, -5.0);
+		t.p2 = m_Vertices[i - 1].Position * 0.1f + glm::vec3(1, -2, -6.0);
 		t.n2 = -1.0f * m_Vertices[i - 1].Normal;
 
-		t.p3 = m_Vertices[i].Position * 0.1f + glm::vec3(0, -2, -5.0);
+		t.p3 = m_Vertices[i].Position * 0.1f + glm::vec3(1, -2, -6.0);
 		t.n3 = -1.0f * m_Vertices[i].Normal;
 
 		t.baseColor = glm::vec3(1.0f);
@@ -95,10 +95,8 @@ void Mesh::encodeTriangle()
 		t.param4 = glm::vec3(0.1f);
 
 		triangles.push_back(t);
-
 		glm::vec2 uv = (m_Vertices[i - 2].TexCoords + m_Vertices[i - 1].TexCoords + m_Vertices[i].TexCoords) / glm::vec2(3);
 		textureCoords.push_back(uv);
-		
 	}
 }
 

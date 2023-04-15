@@ -36,7 +36,7 @@ test::TestRenderPhoto::TestRenderPhoto()
 	m_LightShader = std::make_unique<Shader>("res/shaders/basic.shader");
 
 	// ÎïÌå
-	// ºÐ×Ó
+	// plane
 	planes.push_back(std::make_unique<Plane>(Left, glm::vec3(-1, 0, 0), RED));
 	planes.push_back(std::make_unique<Plane>(Right, glm::vec3(-1, 0, 0), GREEN));
 	planes.push_back(std::make_unique<Plane>(Up, glm::vec3(0, -1, 0), WHITE));
@@ -45,8 +45,8 @@ test::TestRenderPhoto::TestRenderPhoto()
 	planes.push_back(std::make_unique<Plane>(LightUp, glm::vec3(0, -1, 0), LightMaterial));
 
 	// cube
-	//cubes.push_back(std::make_unique<Cube>(glm::vec3(1.3, -1.5, -7.0), CYAN));
-	//cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -7.0), CYAN));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
 
 	WHITE.roughness = 0.3f;
 

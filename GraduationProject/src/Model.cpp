@@ -204,7 +204,6 @@ void Model::encodedData()
             if (data != nullptr)
             {
                 auto& uv = TexData[i];
-
                 t.baseColor = getTexColor(data, uv, width, height, nrComponents);
             }
             triangles.push_back(t);
@@ -216,8 +215,7 @@ glm::vec3 Model::getTexColor(const unsigned char* data, glm::vec2 uv, int w, int
 {
     glm::vec3 res = glm::vec3(1.0);
 
-    int n = sizeof(data) / (h * sizeof(unsigned int));
-    int idx = (int)((uv.x) * h + (uv.y) * h * w);
+    int idx = (int)(uv.x * h + 1) + (int)(uv.y * h + 1) * w;
 
     res.r = data[nr * idx] / 255.0;
     res.g = data[nr * idx + 1] / 255.0;
