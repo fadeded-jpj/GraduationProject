@@ -45,29 +45,23 @@ test::TestRenderPhoto::TestRenderPhoto()
 	planes.push_back(std::make_unique<Plane>(LightUp, glm::vec3(0, -1, 0), LightMaterial));
 
 	// cube
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -7.0), CYAN));
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -7.0), cube1Material));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), cube2Material, 0.5, 0.8, 0.5, PI / 4.0f));
 
 	WHITE.roughness = 0.3f;
 
 	// sphere
-	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(-1.0, 0.5, -5.0), 0.3, WHITE));
+	spheres.push_back(std::make_unique<Sphere>(glm::vec3(-1.0, 0, -5.1), 0.5, WHITE_MIRROR));
 	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(1.5, -1, -6), 0.3, WHITE));
 
 	// model
 	models.push_back(std::make_unique<Model>(modelPath));
+	models[0]->encodedData(modelPos);
 
 	// ³¡¾°
 	m_Scene = std::make_unique<Scene>();
 	
-	for (auto& plane : planes)
-		m_Scene->push(plane.get());
-	for (auto& cube : cubes)
-		m_Scene->push(cube.get());
-	for (auto& sphere : spheres)
-		m_Scene->push(sphere.get());
-	for (auto& model : models)
-		m_Scene->push(model.get());
+	initScene();
 	
 	// Ö¡»º³åÇø
 	m_FBO = std::make_unique<FrameBuffer>();
@@ -87,27 +81,25 @@ void test::TestRenderPhoto::OnRender()
 	deltaTime = currentFrame - lastFrame;
 	lastFrame = currentFrame;
 
-	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	//glClear(GL_COLOR_BUFFER_BIT);
-	//m_LightShader->Bind();
-	//planes[0]->Draw(*m_LightShader);
+	// Ã¿Ò»Ö¡¼ì²âÐÞ¸Ä
+	checkModify();
 
-	if (lastMode != currentMode)
+	if (bufferClear)
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		frameCounter = 0;
 	}
 
-
 	m_PathTracingShader->Bind();
 	m_PathTracingShader->SetUniform1i("mode", currentMode);
 
 	m_FBO->Bind();
-	if (lastMode != currentMode)
+	if (bufferClear)
 	{
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		bufferClear = false;
 	}
 
 	m_PathTracingShader->Bind();
@@ -126,9 +118,7 @@ void test::TestRenderPhoto::OnRender()
 }
 
 void test::TestRenderPhoto::OnImGuiRender()
-{
-	ImGui::SliderInt("spp", &spp, 1, 128);
-	
+{	
 	if (ImGui::Button("Diffuse"))
 		currentMode = Mode::Diffuse;
 	if (ImGui::Button("Specular"))
@@ -136,5 +126,47 @@ void test::TestRenderPhoto::OnImGuiRender()
 	if (ImGui::Button("All"))
 		currentMode = Mode::All;
 
+	ImGui::Text("cube 1");
+	ImGui::SliderFloat3("cube 1 color", &cube1Material.color.x, 0.0f, 1.0f);
+
+	ImGui::Text("cube 2");
+	ImGui::SliderFloat3("cube 2 color", &cube2Material.color.x, 0.0f, 1.0f);
+
+	ImGui::Text("sphere");
+
+	ImGui::Text("model");
+	ImGui::SliderFloat3("model position", &modelPos.x, -2.0, 2.0);
+	
+	if (ImGui::Button("modify position"))
+	{
+		bufferClear = true;
+		cubes[0]->changeMaterial(cube1Material);
+		cubes[1]->changeMaterial(cube2Material);
+		models[0]->encodedData(modelPos);
+		initScene();
+		m_Scene->setInited();
+	}
+
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+}
+
+void test::TestRenderPhoto::checkModify()
+{
+	if (lastMode != currentMode)
+		bufferClear = true;
+}
+
+
+void test::TestRenderPhoto::initScene()
+{
+	m_Scene->clearData();
+	
+	for (auto& plane : planes)
+		m_Scene->push(plane.get());
+	for (auto& cube : cubes)
+		m_Scene->push(cube.get());
+	for (auto& sphere : spheres)
+		m_Scene->push(sphere.get());
+	for (auto& model : models)
+		m_Scene->push(model.get());
 }

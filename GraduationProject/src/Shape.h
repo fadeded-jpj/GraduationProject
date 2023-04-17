@@ -22,8 +22,6 @@ public:
 	Ray(const glm::vec3 start, const glm::vec3 dir) :start(start), dir(glm::normalize(dir)) {}
 };
 
-
-
 struct Material
 {
 	glm::vec3 emissive = glm::vec3(0, 0, 0);			// 是否发光
@@ -155,6 +153,9 @@ private:
 	glm::vec3 vertices;	//左下
 	glm::vec3 center;
 
+	std::vector<std::vector<glm::vec3>> planeVertices;
+	std::vector<glm::vec3> planeNormal;
+
 	std::vector<Triangle_encoded> triangles;
 
 public:
@@ -165,7 +166,6 @@ public:
 	std::vector<Plane> planes;
 
 private:
-	void encodeData();
 public:
 	Cube(glm::vec3 center, Material material, float X = 0.5f, float Y = 0.5f, float Z = 0.5f, float rotateY = 0.0f);
 	~Cube() {}
@@ -173,6 +173,9 @@ public:
 	void Draw(Shader& shader);
 	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive) {}
+	void changeMaterial(Material m);
+	
+	void encodeData();
 
 	inline std::vector<Triangle_encoded> getCodedData() { return triangles; };
 };

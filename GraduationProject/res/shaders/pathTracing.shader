@@ -92,7 +92,6 @@ uniform Camera camera;
 uniform samplerBuffer triangles;
 uniform samplerBuffer bvh;
 uniform int triangleCount;
-uniform int BVHCount;
 uniform int frameCount;
 uniform sampler2D lastFrame;
 
@@ -1027,8 +1026,6 @@ void main()
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
 	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
-	
-	//color = r.material.baseColor;
 
 	FragColor = vec4(color, 1);
 }

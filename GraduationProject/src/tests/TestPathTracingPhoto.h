@@ -64,12 +64,20 @@ namespace test {
 		std::vector<std::unique_ptr<Model>> models;
 
 		glm::vec3 lightPos;
+		glm::vec3 modelPos = glm::vec3(0.8, -2, -6);
+		Material cube1Material = CYAN;
+		Material cube2Material = WHITE;
 
 		int spp = 1;
 		int frameCounter = 0;
+		bool bufferClear = false;
 		std::string modelPath = "res/obj/HuTao/HuTao.pmx";
 		
 		Mode currentMode = Mode::Diffuse;
 		Mode lastMode = currentMode;
+
+	private:
+		void checkModify();
+		void initScene();
 	};
 }

@@ -321,3 +321,15 @@ void FrameBuffer::Draw(Shader& shader, GLuint slot, GLuint texIndex)
 	glBindVertexArray(0);
 	shader.UnBind();
 }
+
+void Scene::clearData()
+{
+	models.clear();
+	trianglesData.clear();
+	BVHData.clear();
+}
+
+bool Scene::checkEmpty()
+{
+	return trianglesData.empty() && BVHData.empty();
+}

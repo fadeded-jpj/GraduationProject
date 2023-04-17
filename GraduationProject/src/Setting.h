@@ -64,8 +64,8 @@ extern std::vector<glm::vec3> Back = {
 };
 
 extern std::vector<glm::vec3> LightUp = {
-	{ 0.5f, 1.999f,-4.5},
-	{-0.5f, 1.999f,-4.5},
+	{ 0.5f, 1.999f,-5},
+	{-0.5f, 1.999f,-5},
 	{-0.5f, 1.999f,-7},
 	{ 0.5f, 1.999f,-7}
 };

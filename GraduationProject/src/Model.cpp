@@ -21,7 +21,6 @@ using namespace glm;
 Model::Model(const std::string& filePath)
 {
     loadModel(filePath);
-    encodedData();
 }
 
 void Model::Draw(Shader& shader)
@@ -174,8 +173,10 @@ unsigned int TextureFromFile(const std::string& path, const std::string& directo
     return textureID;
 }
 
-void Model::encodedData()
+void Model::encodedData(glm::vec3 pos)
 {
+    if (!triangles.empty())
+        triangles.clear();
 
     std::string filename;
     unsigned char* data = nullptr;
@@ -183,6 +184,7 @@ void Model::encodedData()
 
     for (auto& m : m_Meshes)
     {
+        m.encodeTriangle(pos);
         auto TriangleData = m.getTriangleData();
         auto TexData = m.getTextureCoords();
 

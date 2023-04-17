@@ -45,8 +45,8 @@ extern glm::vec3 randomDir(glm::vec3 n)
 //-----------end------------------------
 
 const float PI = 3.14159265359f;
-const unsigned int X_SEGMENTS = 16;
-const unsigned int Y_SEGMENTS = 16;
+const unsigned int X_SEGMENTS = 32;
+const unsigned int Y_SEGMENTS = 32;
 
 
 Triangle::Triangle(const glm::vec3 v0, const glm::vec3 v1, const glm::vec3 v2, const glm::vec3 color)
@@ -160,10 +160,12 @@ void Sphere::encodedData()
         t.emissive = material.emissive;
         t.baseColor = material.color;
         t.param1 = glm::vec3(material.subsurface, material.roughness, material.metallic);
+        t.param2 = glm::vec3(material.specular, material.specularTint, material.anisotropic);
+        t.param3 = glm::vec3(material.sheen, material.sheenTine, material.clearcoat);
+        t.param4 = glm::vec3(material.clearcoatGloss, 0, 0);
 
         triangles.push_back(t);       
     }
-
 }
 
 Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
@@ -575,11 +577,21 @@ void Plane::Draw(Shader& shader)
     
 void Cube::encodeData() 
 {
+    if (!triangles.empty())
+        triangles.clear();
     
+    std::vector<Plane> ps(planeVertices.size());
+
+    for (int i = 0; i < planeVertices.size(); i++)
+    {
+        ps[i] = Plane(planeVertices[i], planeNormal[i], material);
+        auto data = ps[i].getCodedData();
+        triangles.insert(triangles.end(), data.begin(), data.end());
+    }
 }
 
 Cube::Cube(glm::vec3 center, Material material, float X, float Y, float Z, float rotateY) 
-    :Length(X), Width(Y), Height(Z), center(center)
+    :Length(X), Width(Y), Height(Z), center(center), material(material)
 {
     glm::mat3 rotateYMat = {
         cos(rotateY), 0 , -sin(rotateY),
@@ -587,7 +599,7 @@ Cube::Cube(glm::vec3 center, Material material, float X, float Y, float Z, float
         sin(rotateY), 0, cos(rotateY)
     };
 
-    std::vector<std::vector<glm::vec3>> planeVertices = {
+    planeVertices = {
         {   //left
             glm::vec3(-X,-Y, Z) * rotateYMat + center,
             glm::vec3(-X, Y, Z) * rotateYMat + center,
@@ -629,7 +641,7 @@ Cube::Cube(glm::vec3 center, Material material, float X, float Y, float Z, float
         }
     };
 
-    std::vector<glm::vec3> planeNormal = {
+    planeNormal = {
         glm::vec3(-1,0,0) * rotateYMat,
         glm::vec3(-1,0,0) * rotateYMat,
         glm::vec3(0,-1,0) * rotateYMat,
@@ -638,17 +650,15 @@ Cube::Cube(glm::vec3 center, Material material, float X, float Y, float Z, float
         glm::vec3(0,0,-1) * rotateYMat
     };
 
-    std::vector<Plane> ps(planeVertices.size());
+    encodeData();
+}
 
-    for (int i = 0; i < planeVertices.size(); i++)
-    {
-        ps[i] = Plane(planeVertices[i], planeNormal[i], material);
-        auto data = ps[i].getCodedData();
-        triangles.insert(triangles.end(), data.begin(), data.end());
-    }
+void Cube::changeMaterial(Material m)
+{
+    material = m;
+    encodeData();
 }
 
 void Cube::Draw(Shader& shader)
 {
-
 }

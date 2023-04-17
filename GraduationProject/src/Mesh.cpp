@@ -40,7 +40,6 @@ Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std:
 	:m_Vertices(vertices), m_Indices(indices), m_Textures(textures)
 {
 	setupMesh();
-	encodeTriangle();
 }
 
 void Mesh::Draw(Shader shader)
@@ -69,8 +68,14 @@ void Mesh::Draw(Shader shader)
 	glBindVertexArray(0);
 }
 
-void Mesh::encodeTriangle()
+void Mesh::encodeTriangle(glm::vec3 pos)
 {
+	if (!triangles.empty() || !textureCoords.empty())
+	{
+		triangles.clear();
+		textureCoords.clear();
+	}
+
 	int indicesNum = m_Indices.size();
 	for (int i = 2; i < indicesNum; i += 3)
 	{
@@ -78,13 +83,13 @@ void Mesh::encodeTriangle()
 
 		Triangle_encoded t;
 		Material m;
-		t.p1 = m_Vertices[i - 2].Position * 0.1f + glm::vec3(1, -2, -6.0);
+		t.p1 = m_Vertices[i - 2].Position * 0.1f + pos;
 		t.n1 = -1.0f * m_Vertices[i - 2].Normal;
 
-		t.p2 = m_Vertices[i - 1].Position * 0.1f + glm::vec3(1, -2, -6.0);
+		t.p2 = m_Vertices[i - 1].Position * 0.1f + pos;
 		t.n2 = -1.0f * m_Vertices[i - 1].Normal;
 
-		t.p3 = m_Vertices[i].Position * 0.1f + glm::vec3(1, -2, -6.0);
+		t.p3 = m_Vertices[i].Position * 0.1f + pos;
 		t.n3 = -1.0f * m_Vertices[i].Normal;
 
 		t.baseColor = glm::vec3(1.0f);

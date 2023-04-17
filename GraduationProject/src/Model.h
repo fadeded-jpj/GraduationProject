@@ -29,6 +29,7 @@ public:
 	void Draw(Shader& shader);
 	std::vector<Triangle_encoded> getCodedData() { return triangles; }
 	void setEmissive(glm::vec3 emissive) {}
+	void encodedData(glm::vec3 pos = glm::vec3(0));
 
 private:
 	void loadModel(const std::string path);
@@ -36,7 +37,6 @@ private:
 	Mesh processMesh(aiMesh* mesh, const aiScene* scene);
 	std::vector<MeshTexture> loadMaterialTextures(aiMaterial* mat, aiTextureType type, std::string typeName);
 
-	void encodedData();
 	glm::vec3 getTexColor(const unsigned char* data, glm::vec2 uv, int w, int h, int nr);
 };
 

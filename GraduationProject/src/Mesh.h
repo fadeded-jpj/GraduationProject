@@ -39,9 +39,7 @@ private:
 	std::vector<glm::vec2> textureCoords;
 
 	void setupMesh();
-	void encodeTriangle();
 	
-
 public:
 	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, std::vector<MeshTexture> textures);
 	~Mesh() {}
@@ -49,4 +47,6 @@ public:
 	void Draw(Shader shader);
 	std::vector<Triangle_encoded> getTriangleData() { return triangles; }
 	std::vector<glm::vec2> getTextureCoords() { return textureCoords; }
+
+	void encodeTriangle(glm::vec3 pos);
 };

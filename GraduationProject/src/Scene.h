@@ -46,6 +46,10 @@ public:
 	HitResult HitTriangle(Triangle_encoded t, Ray ray);
 	HitResult HitBVH(Ray ray);
 
+	void clearData();
+	bool checkEmpty();
+	void setInited() { inited = false; }
+
 private:
 	void initTrianglesData();
 	void initBVHData();
