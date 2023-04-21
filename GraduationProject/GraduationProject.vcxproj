@@ -540,6 +540,7 @@
   <ItemGroup>
     <None Include="res\obj\HuTao\HuTao.pmx" />
     <None Include="res\shaders\basic.shader" />
+    <None Include="res\shaders\denoise.shader" />
     <None Include="res\shaders\encoded.shader" />
     <None Include="res\shaders\lastframe.shader" />
     <None Include="res\shaders\pathTracing.shader" />

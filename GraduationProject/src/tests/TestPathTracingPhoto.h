@@ -54,9 +54,11 @@ namespace test {
 		std::unique_ptr<Shader> m_FrameShader;
 		std::unique_ptr<Shader> m_PBRShader;
 		std::unique_ptr<Shader> m_LightShader;
+		std::unique_ptr<Shader> m_DenoiseShader;
 		
 		std::unique_ptr<Scene> m_Scene;
 		std::unique_ptr<FrameBuffer> m_FBO;
+		std::unique_ptr<FrameBuffer> m_FBO_OUT;
 
 		std::vector<std::unique_ptr<Plane>> planes;
 		std::vector<std::unique_ptr<Cube>> cubes;

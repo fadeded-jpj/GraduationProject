@@ -1625,6 +1625,7 @@
     <None Include="res\shaders\RealTime.shader" />
     <None Include="res\shaders\rander.shader" />
     <None Include="res\obj\HuTao\HuTao.pmx" />
+    <None Include="res\shaders\denoise.shader" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\vendor\glm\detail\glm.cpp">

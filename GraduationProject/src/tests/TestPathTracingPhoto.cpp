@@ -35,6 +35,10 @@ test::TestRenderPhoto::TestRenderPhoto()
 
 	m_LightShader = std::make_unique<Shader>("res/shaders/basic.shader");
 
+	m_DenoiseShader = std::make_unique<Shader>("res/shaders/denoise.shader");
+	m_DenoiseShader->Bind();
+	m_DenoiseShader->SetUniform1i("texture0", 0);
+
 	// 物体
 	// plane
 	planes.push_back(std::make_unique<Plane>(Left, glm::vec3(-1, 0, 0), RED));
@@ -65,6 +69,7 @@ test::TestRenderPhoto::TestRenderPhoto()
 	
 	// 帧缓冲区
 	m_FBO = std::make_unique<FrameBuffer>();
+	m_FBO_OUT = std::make_unique<FrameBuffer>();
 }
 
 test::TestRenderPhoto::~TestRenderPhoto()
@@ -110,9 +115,19 @@ void test::TestRenderPhoto::OnRender()
 	m_Scene->Render(*m_PathTracingShader);
 	m_FBO->DrawBuffer(1);
 	
-	// 绘制缓冲区内容
+	// 绘制缓冲区内容到输出缓冲区
 	m_FBO->UnBind();
+	
+	m_FBO_OUT->Bind();
+	m_FBO_OUT->BindTexture(2);
+	
 	m_FBO->Draw(*m_FrameShader);
+	
+	m_FBO_OUT->DrawBuffer(1);
+
+	//输出缓冲区处理后绘制图像
+	m_FBO_OUT->UnBind();
+	m_FBO_OUT->Draw(*m_DenoiseShader);
 
 	lastMode = currentMode;
 }
@@ -135,7 +150,7 @@ void test::TestRenderPhoto::OnImGuiRender()
 	ImGui::Text("sphere");
 
 	ImGui::Text("model");
-	ImGui::SliderFloat3("model position", &modelPos.x, -2.0, 2.0);
+	ImGui::SliderFloat3("model position", &modelPos.x, -8.0, 2.0);
 	
 	if (ImGui::Button("modify position"))
 	{
