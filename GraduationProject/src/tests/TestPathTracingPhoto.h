@@ -66,7 +66,7 @@ namespace test {
 		std::vector<std::unique_ptr<Model>> models;
 
 		glm::vec3 lightPos;
-		glm::vec3 modelPos = glm::vec3(0.8, -2, -6);
+		glm::vec3 modelPos = glm::vec3(0.8, -2, -5);
 		Material cube1Material = CYAN;
 		Material cube2Material = WHITE;
 
@@ -78,8 +78,15 @@ namespace test {
 		Mode currentMode = Mode::Diffuse;
 		Mode lastMode = currentMode;
 
+		//  ”Ω«±£¥Ê
+		bool generate = false;
+		glm::vec3 lower_left_corner = glm::vec3(-1);
+		glm::vec3 horizontal = glm::vec3(2, 0, 0);
+		glm::vec3 vertical = glm::vec3(0, 2, 0);
+		glm::vec3 origin = glm::vec3(0);
+
 	private:
-		void checkModify();
 		void initScene();
+		void updateView();
 	};
 }

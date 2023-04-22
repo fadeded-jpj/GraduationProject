@@ -12,7 +12,7 @@ extern double randf();
 extern glm::vec3 randomVec3();
 extern glm::vec3 randomDir(glm::vec3 n);
 
-extern Camera camera;
+extern newCamera newcamera;
 //-----------end------------------------
 
 Scene::Scene()
@@ -112,20 +112,7 @@ void Scene::Render(Shader& shader)
 	}
 
 	shader.Bind();
-	shader.SetUniform3fv("camera.lower_left_corner", { -1.0, -1.0, -1.0 });
-	shader.SetUniform3fv("camera.horizontal", {2, 0, 0});
-	shader.SetUniform3fv("camera.vertical", { 0, 2, 0 });
-	shader.SetUniform3fv("camera.origin", {0 , 0 , 0});
-	//shader.SetUniform3fv("camera.horizontal", 2.0f * camera.GetRight());
-	//shader.SetUniform3fv("camera.vertical", 2.0f * camera.GetUp());
-	//shader.SetUniform3fv("camera.origin", camera.GetPosition());
-
-
-	//==
-	shader.SetUniform3fv("eye", camera.GetEye());
-	shader.SetUniformMat4f("cameraRotate", camera.GetCameraRotate());
 	
-
 	//==
 	shader.SetUniform1i("triangles", 0);
 	shader.SetUniform1i("bvh", 1);

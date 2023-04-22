@@ -4,17 +4,19 @@ layout(location = 0) in vec3 aPos;
 
 out vec2 screenCoord;
 out vec3 pix;
+out mat4 vp;
 
 uniform mat4 view;
 uniform mat4 projection;
 
 void main()
 {
-	gl_Position = projection * view * vec4(aPos, 1.0f);
+	gl_Position = vec4(aPos, 1.0f);
 	//gl_Position = vec4(aPos, 1.0f);
 
 	screenCoord = (vec2(aPos.x, aPos.y) + 1.0) / 2.0;
 	pix = aPos;
+	vp =  projection * view;
 }
 
 
@@ -24,6 +26,7 @@ out vec4 FragColor;
 
 in vec2 screenCoord;
 in vec3 pix;
+in mat4 vp;
 
 #define TRIANGLE_SIEZ 12
 #define BVHNODE_SIZE 4

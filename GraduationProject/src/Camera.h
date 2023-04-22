@@ -7,6 +7,10 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/type_ptr.hpp"
 
+using namespace glm;
+
+extern const float PI;
+
 enum Camera_Movement
 {
 	FORWARD, BACKWARD, LEFT, RIGHT
@@ -47,4 +51,38 @@ public:
 	void ProcessKeyboard(const Camera_Movement dir, const float delatTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 	void ProcessMouseScroll(float xoffset, float yoffset);
+};
+
+class newCamera {
+public:
+	newCamera(
+		float vfov, 
+		float aspect = 1.0f,
+		vec3 lookfrom = vec3(0), vec3 lookat = vec3(0, 0, -1), vec3 vup = vec3(0, 1, 0)
+	) : vfov(vfov), lookat(lookat), vup(vup), origin(lookfrom), aspect(aspect)
+	{
+		update();
+	}
+
+
+public:
+	vec3 origin;
+	vec3 lower_left_corner;
+	vec3 horizontal;
+	vec3 vertical;
+
+	void ProcessKeyboard(const Camera_Movement dir, const float delatTime) {}
+	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
+	void ProcessMouseScroll(float xoffset, float yoffset);
+
+	inline float GetFov() { return vfov; }
+	inline mat4 GetViewMatrix() { return lookAt(origin, lookat, normalize(vertical)); }
+
+private:
+	float vfov;
+	vec3 lookat;
+	vec3 vup;
+	float aspect;
+
+	void update();
 };

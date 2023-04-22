@@ -9,13 +9,14 @@
 
 
 //-------- windows settings-----------
-extern const unsigned int SCR_WIDTH = 1200;
-extern const unsigned int SCR_HEIGHT = 1200;
+extern const unsigned int SCR_WIDTH = 900;
+extern const unsigned int SCR_HEIGHT = 900;
 
 extern bool mouse = true;
 
 //----------camera settings------------
 extern Camera camera(glm::vec3(0.0f, 0.0f, 4.0f));
+extern newCamera newcamera(90);
 extern float lastX = SCR_HEIGHT / 2.0f;
 extern float lastY = SCR_WIDTH / 2.0f;
 extern bool firstMouse = true;
@@ -30,44 +31,44 @@ extern const float PI = 3.14159265359;
 
 //----------Connle Box DATA-----------------
 extern std::vector<glm::vec3> Left = {
-	{-2,-2,-3},
-	{-2, 2,-3},
-	{-2, 2,-8},
-	{-2,-2,-8}
+	{-2,-2,-1},
+	{-2, 2,-1},
+	{-2, 2,-7},
+	{-2,-2,-7}
 };
 extern std::vector<glm::vec3> Right = {
-	{ 2,-2,-3},
-	{ 2, 2,-3},
-	{ 2, 2,-8},
-	{ 2,-2,-8}
+	{ 2,-2,-1},
+	{ 2, 2,-1},
+	{ 2, 2,-7},
+	{ 2,-2,-7}
 };
 
 extern std::vector<glm::vec3> Up = {
-	{ 2, 2,-3},
-	{-2, 2,-3},
-	{-2, 2,-8},
-	{ 2, 2,-8}
+	{ 2, 2,-1},
+	{-2, 2,-1},
+	{-2, 2,-7},
+	{ 2, 2,-7}
 };
 
 extern std::vector<glm::vec3> Down = {
-	{ 2,-2,-3},
-	{-2,-2,-3},
-	{-2,-2,-8},
-	{ 2,-2,-8}
+	{ 2,-2,-1},
+	{-2,-2,-1},
+	{-2,-2,-7},
+	{ 2,-2,-7}
 };
 
 extern std::vector<glm::vec3> Back = {
-	{-2,-2,-8},
-	{-2, 2,-8},
-	{ 2, 2,-8},
-	{ 2,-2,-8}
+	{-2,-2,-7},
+	{-2, 2,-7},
+	{ 2, 2,-7},
+	{ 2,-2,-7}
 };
 
 extern std::vector<glm::vec3> LightUp = {
-	{ 0.5f, 1.999f,-5},
-	{-0.5f, 1.999f,-5},
-	{-0.5f, 1.999f,-7},
-	{ 0.5f, 1.999f,-7}
+	{ 0.5f, 1.999f,-4},
+	{-0.5f, 1.999f,-4},
+	{-0.5f, 1.999f,-6},
+	{ 0.5f, 1.999f,-6}
 };
 
 extern Material RED({ 1,0,0 });

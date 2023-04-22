@@ -2,7 +2,6 @@
 
 #include "Camera.h"
 #include "Setting.h"
-
 #include <iostream>
 
 // callback
@@ -61,9 +60,11 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastY = ypos;
 
     camera.ProcessMouseMovement(xoffset, yoffset);
+    newcamera.ProcessMouseMovement(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffest, double yoffest)
 {
     camera.ProcessMouseScroll(static_cast<float>(xoffest), static_cast<float>(yoffest));
+    newcamera.ProcessMouseScroll(static_cast<float>(xoffest), static_cast<float>(yoffest));
 }

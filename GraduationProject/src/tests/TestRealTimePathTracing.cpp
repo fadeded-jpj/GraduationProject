@@ -4,7 +4,7 @@
 
 #include "../Camera.h"
 
-extern Camera camera;
+extern newCamera newcamera;
 
 test::TestRenderRealTime::TestRenderRealTime()
 {
@@ -28,8 +28,8 @@ test::TestRenderRealTime::TestRenderRealTime()
 	planes.push_back(std::make_unique<Plane>(LightUp, glm::vec3(0, -1, 0), LightMaterial));
 
 	// cube
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -7.0), CYAN));
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -5.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -5.0), CYAN));
+	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -3.1), WHITE, 0.5, 0.8, 0.5, PI / 4.0f));
 
 	// sphere
 	//spheres.push_back(std::make_unique<Sphere>(glm::vec3(0, 0.5, -5.5), 0.5, WHITE_MIRROR);
@@ -63,14 +63,19 @@ void test::TestRenderRealTime::OnRender()
 	glEnable(GL_DEPTH_TEST);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	{
-		glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-		glm::mat4 view = camera.GetViewMatrix();
+		glm::mat4 projection = glm::perspective(glm::radians(newcamera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+		glm::mat4 view = newcamera.GetViewMatrix();
 
 		m_PathTracingShader->Bind();
 		m_PathTracingShader->SetUniform1i("spp", spp);
 		m_PathTracingShader->SetUniformMat4f("projection", projection);
 		m_PathTracingShader->SetUniformMat4f("view", view);
 		m_PathTracingShader->SetUniform1i("frameCount", frameCounter++);
+
+		m_PathTracingShader->SetUniform3fv("camera.lower_left_corner", newcamera.lower_left_corner);
+		m_PathTracingShader->SetUniform3fv("camera.horizontal", newcamera.horizontal);
+		m_PathTracingShader->SetUniform3fv("camera.vertical", newcamera.vertical);
+		m_PathTracingShader->SetUniform3fv("camera.origin", newcamera.origin);
 
 		// 渲染数据读入帧缓冲区
 		m_Scene->Render(*m_PathTracingShader);

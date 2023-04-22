@@ -89,3 +89,41 @@ void Camera::ProcessMouseScroll(float xoffset, float yoffset)
 	if (m_Fov > 100.0f)
 		m_Fov = 100.0f;
 }
+
+void newCamera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
+{
+	xoffset *= 0.001f;
+	yoffset *= 0.001f;
+
+	lookat = normalize(lookat + vec3(xoffset, yoffset, 0));
+	update();
+}
+
+void newCamera::ProcessMouseScroll(float xoffset, float yoffset)
+{
+	if (vfov >= 1.0f && vfov <= 100.0f)
+		vfov -= yoffset;
+	if (vfov < 1.0f)
+		vfov = 1.0f;
+	if (vfov > 100.0f)
+		vfov = 100.0f;
+
+	update();
+}
+
+void newCamera::update()
+{
+	vec3 u, v, w;
+
+	auto theta = vfov / 180.0 * PI;
+	float half_height = tan(theta / 2);
+	float half_width = aspect * half_height;
+	w = normalize(origin - lookat);
+	u = normalize(cross(vup, w));
+	v = cross(w, u);
+
+	lower_left_corner = origin - half_width * u - half_height * v - w;
+
+	horizontal = 2 * half_width * u;
+	vertical = 2 * half_height * v;
+}

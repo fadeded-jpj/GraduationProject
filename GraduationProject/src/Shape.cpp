@@ -44,7 +44,7 @@ extern glm::vec3 randomDir(glm::vec3 n)
 
 //-----------end------------------------
 
-const float PI = 3.14159265359f;
+extern const float PI;
 const unsigned int X_SEGMENTS = 32;
 const unsigned int Y_SEGMENTS = 32;
 

@@ -20,8 +20,9 @@ out vec4 FragColor;
 in vec2 screenCoord;
 
 uniform sampler2D texture0;
+uniform int frameCout;
 
-//const float offset = 1.0 / 1200.0;
+//const float offset = 1.0 / 900.0;
 //
 //void main()
 //{
@@ -57,5 +58,6 @@ uniform sampler2D texture0;
 
 void main()
 {
-	FragColor = vec4(texture(texture0, screenCoord).xyz, 1.0);
+	vec3 color = texture(texture0, screenCoord).xyz;
+	FragColor = vec4(color, 1.0);
 }
