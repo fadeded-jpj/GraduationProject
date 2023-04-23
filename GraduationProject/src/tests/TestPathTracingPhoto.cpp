@@ -52,13 +52,13 @@ test::TestRenderPhoto::TestRenderPhoto()
 	planes.push_back(std::make_unique<Plane>(LightUp, glm::vec3(0, -1, 0), LightMaterial));
 
 	// cube
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(0.3, -1.5, -6.0), cube1Material));
-	cubes.push_back(std::make_unique<Cube>(glm::vec3(-1.0, -1.2, -4.1), cube2Material, 0.5, 0.8, 0.5, PI / 4.0f));
+	cubes.push_back(std::make_unique<Cube>(cube1Pos, cube1Material));
+	cubes.push_back(std::make_unique<Cube>(cube2Pos, cube2Material, 0.5, 0.8, 0.5, PI / 4.0f));
 
 	WHITE.roughness = 0.3f;
 
 	// sphere
-	spheres.push_back(std::make_unique<Sphere>(glm::vec3(-1.0, 0, -4.1), 0.5, WHITE_MIRROR));
+	spheres.push_back(std::make_unique<Sphere>(spherePos, 0.5, sphereMaterial));
 
 	// model
 	models.push_back(std::make_unique<Model>(modelPath));
@@ -158,27 +158,43 @@ void test::TestRenderPhoto::OnImGuiRender()
 	ImGui::Checkbox("generate", &generate);
 
 	ImGui::BulletText("cube1");
+	ImGui::SliderFloat3("cube 1 position", &cube1Pos.x, -6.0f, 2.0f);
 	ImGui::SliderFloat3("cube 1 color", &cube1Material.color.x, 0.0f, 1.0f);
+	ImGui::SliderFloat3("cube 1 emissive", &cube1Material.emissive.x, 0.0f, 1.0f);
+	ImGui::SliderFloat("cube 1 roughness", &cube1Material.roughness, 0.05f, 0.95f);
+	ImGui::SliderFloat("cube 1 metallic", &cube1Material.metallic, 0.05f, 0.95f);
 
 	ImGui::BulletText("cube 2");
+	ImGui::SliderFloat3("cube 2 position", &cube2Pos.x, -6.0f, 2.0f);
 	ImGui::SliderFloat3("cube 2 color", &cube2Material.color.x, 0.0f, 1.0f);
+	ImGui::SliderFloat3("cube 2 emissive", &cube2Material.emissive.x, 0.0f, 1.0f);
+	ImGui::SliderFloat("cube 2 roughness", &cube2Material.roughness, 0.05f, 0.95f);
+	ImGui::SliderFloat("cube 2 metallic", &cube2Material.metallic, 0.05f, 0.95f);
+
 
 	ImGui::BulletText("sphere");
+	ImGui::SliderFloat3("sphere position", &spherePos.x, -6.0f, 2.0f);
+	ImGui::SliderFloat3("sphere color", &sphereMaterial.color.x, 0.0f, 1.0f);
+	ImGui::SliderFloat3("sphere emissive", &sphereMaterial.emissive.x, 0.0f, 1.0f);
+	ImGui::SliderFloat("sphere roughness", &sphereMaterial.roughness, 0.05f, 0.95f);
+	ImGui::SliderFloat("sphere metallic", &sphereMaterial.metallic, 0.05f, 0.95f);
 
 	ImGui::BulletText("model");
 	ImGui::SliderFloat3("model position", &modelPos.x, -6.0, 2.0);
 	
-	if (ImGui::Button("modify position"))
+	if (ImGui::Button("modify"))
 	{
 		bufferClear = true;
 		cubes[0]->changeMaterial(cube1Material);
 		cubes[1]->changeMaterial(cube2Material);
+		spheres[0]->changeMaterial(sphereMaterial);
 		models[0]->encodedData(modelPos);
 		initScene();
 		m_Scene->setInited();
 	}
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+	ImGui::Text("current SPP: %d frame", frameCounter);
 }
 
 

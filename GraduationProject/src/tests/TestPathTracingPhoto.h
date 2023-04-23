@@ -67,8 +67,13 @@ namespace test {
 
 		glm::vec3 lightPos;
 		glm::vec3 modelPos = glm::vec3(0.8, -2, -5);
+		glm::vec3 cube1Pos = glm::vec3(0.3, -1.5, -6.0);
+		glm::vec3 cube2Pos = glm::vec3(-1.0, -1.2, -4.1);
+		glm::vec3 spherePos = glm::vec3(-1.0, 0, -4.1);
+
 		Material cube1Material = CYAN;
 		Material cube2Material = WHITE;
+		Material sphereMaterial = WHITE_MIRROR;
 
 		int spp = 1;
 		int frameCounter = 0;

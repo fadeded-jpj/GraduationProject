@@ -113,7 +113,8 @@ void newCamera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean con
 	xoffset *= 0.001f;
 	yoffset *= 0.001f;
 	
-	lookat = normalize(lookat + vec3(xoffset, yoffset, 0));
+	if(constrainPitch)
+		lookat = lookat + vec3(xoffset, yoffset, 0);
 	update();
 }
 

@@ -1051,7 +1051,7 @@ void main()
 	color += r.material.emissive;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
-	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
+	color = mix(lastColor, color, max(1.0 / float(frameCount + 1), 0.001));
 
 	FragColor = vec4(color, 1);
 }

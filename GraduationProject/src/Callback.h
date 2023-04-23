@@ -12,24 +12,31 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        newcamera.constrainPitch = false;
+    }
+    else 
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        newcamera.constrainPitch = true;
+    }
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) 
     {
         newcamera.ProcessKeyboard(FORWARD, deltaTime);
-        camera.ProcessKeyboard(FORWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) 
     {
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
         newcamera.ProcessKeyboard(BACKWARD, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) 
     {
-        camera.ProcessKeyboard(LEFT, deltaTime);
         newcamera.ProcessKeyboard(LEFT, deltaTime);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) 
     {
-        camera.ProcessKeyboard(RIGHT, deltaTime);
         newcamera.ProcessKeyboard(RIGHT, deltaTime);
     }
 
@@ -72,7 +79,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     lastY = ypos;
 
     camera.ProcessMouseMovement(xoffset, yoffset);
-    newcamera.ProcessMouseMovement(xoffset, yoffset);
+    newcamera.ProcessMouseMovement(xoffset, yoffset, newcamera.constrainPitch);
 }
 
 void scroll_callback(GLFWwindow* window, double xoffest, double yoffest)

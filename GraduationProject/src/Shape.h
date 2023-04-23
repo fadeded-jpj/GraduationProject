@@ -115,6 +115,7 @@ public:
 	void Draw(Shader& shader);
 	HitResult intersect(Ray ray) { return HitResult(); }
 	void setEmissive(glm::vec3 emissive);
+	void changeMaterial(Material& m);
 
 	inline std::vector<Triangle_encoded> getCodedData() { return triangles; }
 };

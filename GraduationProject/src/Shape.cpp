@@ -654,3 +654,9 @@ void Cube::Draw(Shader& shader)
     for (auto& plane : planes)
         plane.Draw(shader);
 }
+
+void Sphere::changeMaterial(Material& m)
+{
+    material = m;
+    encodedData();
+}

@@ -73,6 +73,8 @@ public:
 	vec3 horizontal;
 	vec3 vertical;
 
+	bool constrainPitch = true;
+
 	void ProcessKeyboard(const Camera_Movement dir, const float delatTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 	void ProcessMouseScroll(float xoffset, float yoffset);
