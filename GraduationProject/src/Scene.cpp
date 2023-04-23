@@ -113,10 +113,8 @@ void Scene::Render(Shader& shader)
 
 	shader.Bind();
 	
-	//==
 	shader.SetUniform1i("triangles", 0);
 	shader.SetUniform1i("bvh", 1);
-	//shader.SetUniform1i("lastFrame", 2);
 
 	shader.SetUniform1i("triangleCount", trianglesData.size());
 	shader.SetUniform1i("BVHCount", BVHData.size());
@@ -130,45 +128,33 @@ void Scene::Render(Shader& shader)
 }
 
 void Scene::Draw(Shader& shader)
-{
-	if (!inited)
-	{
-		inited = true;
+{	
+	if (!inited) {
 		initTrianglesData();
 		initBVHData();
-	}
-	
 
-	for (auto& m : models)
-	{
-		m->Draw(shader);
+		// °ó¶¨»º³åÇø
+		myBindBuffer(tbo, texBuffer, trianglesData, 0);
+		myBindBuffer(bvh_tbo, bvh_texBuffer, BVHData, 1);
+
+		inited = true;
 	}
+
+	shader.Bind();
+	shader.SetUniform1i("triangles", 0);
+	shader.SetUniform1i("bvh", 1);
+
+	glBindVertexArray(VAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glDrawElements(GL_TRIANGLE_STRIP, indices.size(), GL_UNSIGNED_INT, 0);
+
+	glBindVertexArray(0);
 }
 
 void Scene::BindTex(GLuint& tex, GLuint slot)
 {
 	glActiveTexture(GL_TEXTURE0 + slot);
 	glBindTexture(GL_TEXTURE_2D, tex);
-}
-
-float Scene::HitAABB(Ray ray)
-{
-	return 0;
-}
-
-HitResult Scene::HitArray(Ray ray, int l, int r)
-{
-	return HitResult();
-}
-
-HitResult Scene::HitTriangle(Triangle_encoded t, Ray ray)
-{
-	return HitResult();
-}
-
-HitResult Scene::HitBVH(Ray ray)
-{
-	return HitResult();
 }
 
 

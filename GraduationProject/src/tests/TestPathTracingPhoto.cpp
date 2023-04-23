@@ -33,7 +33,7 @@ test::TestRenderPhoto::TestRenderPhoto()
 
 	m_PBRShader = std::make_unique<Shader>("res/shaders/rander.shader");
 	m_PBRShader->Bind();
-	m_PBRShader->SetUniform3fv("light.pos", lightPos);
+	m_PBRShader->SetUniform3fv("light.Pos", lightPos);
 	m_PBRShader->SetUniform3fv("light.color", LightMaterial.emissive);
 
 	m_LightShader = std::make_unique<Shader>("res/shaders/basic.shader");
@@ -92,6 +92,16 @@ void test::TestRenderPhoto::OnRender()
 	{
 		frameCounter = 0;
 		//TODO: render by phong
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		m_PBRShader->Bind();
+		m_PBRShader->SetUniform3fv("camera.lower_left_corner", lower_left_corner);
+		m_PBRShader->SetUniform3fv("camera.horizontal", horizontal);
+		m_PBRShader->SetUniform3fv("camera.vertical", vertical);
+		m_PBRShader->SetUniform3fv("camera.origin", origin);
+
+		m_Scene->Draw(*m_PBRShader);
 
 		updateView();
 	}

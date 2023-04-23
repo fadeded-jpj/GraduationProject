@@ -256,7 +256,7 @@ Sphere::Sphere(const glm::vec3 center, const float R, const glm::vec3 color)
             positions.push_back(R * glm::vec3(xPos, yPos, zPos) + center);
             //positions.push_back(glm::vec3(xPos, yPos, zPos));
             uv.push_back(glm::vec2(xSegment, ySegment));
-            normals.push_back(glm::vec3(xPos, yPos, zPos));
+            normals.push_back(glm::normalize(glm::vec3(xPos, yPos, zPos)));
         }
     }
 
@@ -345,7 +345,7 @@ Sphere::Sphere(const glm::vec3 center, const float R, Material material)
             positions.push_back(R * glm::vec3(xPos, yPos, zPos) + center);
             //positions.push_back(glm::vec3(xPos, yPos, zPos));
             uv.push_back(glm::vec2(xSegment, ySegment));
-            normals.push_back(glm::vec3(xPos, yPos, zPos));
+            normals.push_back(glm::normalize(glm::vec3(xPos, yPos, zPos)));
         }
     }
 
@@ -547,12 +547,6 @@ void Plane::Draw(Shader& shader)
     glm::mat4 projection = glm::perspective(glm::radians(camera.GetFov()), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
     glm::mat4 view = camera.GetViewMatrix();
 
-    std::cout << "    plane" << std::endl;
-    for (int i = 0; i < vertices.size(); i += 3)
-    {
-        std::cout << vertices[i] << "," << vertices[i + 1] << "," << vertices[i + 2] << std::endl;
-    }
-
 
     shader.Bind();
     shader.SetUniformMat4f("projection", projection);
@@ -565,10 +559,6 @@ void Plane::Draw(Shader& shader)
     shader.SetUniform1f("material.metallic", materal.metallic);
     shader.SetUniform1f("material.roughness", materal.roughness);
     shader.SetUniform1f("material.ao", 0.5f);
-
-    std::cout << "vertices size: " << vertices.size() << std::endl;
-    std::cout << "indices size: " << indices.size() << std::endl << std::endl;
-
 
     glBindVertexArray(VAO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -661,4 +651,6 @@ void Cube::changeMaterial(Material m)
 
 void Cube::Draw(Shader& shader)
 {
+    for (auto& plane : planes)
+        plane.Draw(shader);
 }

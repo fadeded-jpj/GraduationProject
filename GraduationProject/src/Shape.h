@@ -158,6 +158,7 @@ private:
 
 	std::vector<Triangle_encoded> triangles;
 
+	GLuint VAO, VBO, EBO;
 public:
 	Material material;
 

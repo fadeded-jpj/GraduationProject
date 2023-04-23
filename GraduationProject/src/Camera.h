@@ -32,7 +32,6 @@ private:
 	float m_MouseSensitivity;
 
 	float m_Fov;
-	glm::vec3 eye;
 
 	void updateCameraVector();
 public:
@@ -40,8 +39,7 @@ public:
 	~Camera() {}
 
 	glm::mat4 GetViewMatrix() const;
-	glm::mat4 GetCameraRotate();
-	glm::vec3 GetEye();
+
 	inline float GetFov() const { return m_Fov; }
 	inline glm::vec3 GetPosition() const { return m_Pos; }
 	inline glm::vec3 GetFront() const { return m_Front; }
@@ -51,6 +49,10 @@ public:
 	void ProcessKeyboard(const Camera_Movement dir, const float delatTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 	void ProcessMouseScroll(float xoffset, float yoffset);
+
+	vec3 lower_left_corner;
+	vec3 horizontal;
+	vec3 vertical;
 };
 
 class newCamera {
@@ -59,7 +61,7 @@ public:
 		float vfov, 
 		float aspect = 1.0f,
 		vec3 lookfrom = vec3(0), vec3 lookat = vec3(0, 0, -1), vec3 vup = vec3(0, 1, 0)
-	) : vfov(vfov), lookat(lookat), vup(vup), origin(lookfrom), aspect(aspect)
+	) :vfov(vfov), aspect(aspect), origin(lookfrom), lookat(lookat),vup(vup)
 	{
 		update();
 	}
@@ -71,7 +73,7 @@ public:
 	vec3 horizontal;
 	vec3 vertical;
 
-	void ProcessKeyboard(const Camera_Movement dir, const float delatTime) {}
+	void ProcessKeyboard(const Camera_Movement dir, const float delatTime);
 	void ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch = true);
 	void ProcessMouseScroll(float xoffset, float yoffset);
 
@@ -83,6 +85,10 @@ private:
 	vec3 lookat;
 	vec3 vup;
 	float aspect;
+
+	vec3 right;
+	vec3 up;
+	vec3 front;
 
 	void update();
 };

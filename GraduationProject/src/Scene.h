@@ -41,11 +41,6 @@ public:
 	void Draw(Shader& shader);
 	void BindTex(GLuint &tex, GLuint slot = 0);
 
-	float HitAABB(Ray ray);
-	HitResult HitArray(Ray ray, int l, int r);
-	HitResult HitTriangle(Triangle_encoded t, Ray ray);
-	HitResult HitBVH(Ray ray);
-
 	void clearData();
 	bool checkEmpty();
 	void setInited() { inited = false; }

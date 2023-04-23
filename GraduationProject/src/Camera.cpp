@@ -6,7 +6,6 @@ Camera::Camera(const glm::vec3 pos, const glm::vec3 worldUp)
 	m_Pitch(0.0f), m_Yaw(-90.0f), m_MouseSensitivity(0.01f),
 	m_Fov(60.0f)
 {
-	eye = m_Pos;
 	updateCameraVector();
 }
 
@@ -20,33 +19,26 @@ void Camera::updateCameraVector()
 	m_Front = glm::normalize(front);
 	m_Right = glm::normalize(glm::cross(m_Front, m_WorldUp));
 	m_Up = glm::normalize(glm::cross(m_Right, m_Front));
+
+	vec3 u, v, w;
+
+	auto theta = radians(m_Fov);
+	float half_height = tan(theta / 2);
+	float half_width = half_height;
+	w = -m_Front;
+	u = m_Right;
+	v = m_Up;
+
+	lower_left_corner = m_Pos - half_width * u - half_height * v - w;
+
+	horizontal = 2 * half_width * u;
+	vertical = 2 * half_height * v;
 }
 glm::mat4 Camera::GetViewMatrix() const
 {
 	return glm::lookAt(m_Pos, m_Pos + m_Front, m_Up);
 }
 
-glm::mat4 Camera::GetCameraRotate()
-{
-	glm::mat4 res = glm::lookAt(GetEye(), glm::vec3(0, 0, 0), m_Up);
-	return glm::inverse(res);
-	//return res;
-}
-
-glm::vec3 Camera::GetEye()
-{	
-	glm::vec3 eye = glm::vec3(-sin(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)),
-		sin(glm::radians(m_Yaw)),
-		cos(glm::radians(m_Yaw)) * cos(glm::radians(m_Pitch)));
-	//glm::vec3 eye = m_Pos;
-	eye.x *= 4.0;
-	eye.y *= 4.0;
-	eye.z *= 4.0;
-	//glm::vec3 res = m_Pos;
-
-	//return res;
-	return eye;
-}
 
 void Camera::ProcessKeyboard(const Camera_Movement dir, const float delatTime)
 {
@@ -90,11 +82,37 @@ void Camera::ProcessMouseScroll(float xoffset, float yoffset)
 		m_Fov = 100.0f;
 }
 
+void newCamera::ProcessKeyboard(const Camera_Movement dir, const float delatTime)
+{
+	float speed = 2.0 * delatTime;
+	if (dir == Camera_Movement::FORWARD) 
+	{
+		origin += front * speed;
+		lookat += front * speed;
+	}
+	if (dir == Camera_Movement::BACKWARD)
+	{
+		origin -= front * speed;
+		lookat -= front * speed;
+	}
+	if (dir == Camera_Movement::LEFT)
+	{
+		origin -= right * speed;
+		lookat -= right * speed;
+	}
+	if (dir == Camera_Movement::RIGHT)
+	{
+		origin += right * speed;
+		lookat += right * speed;
+	}
+	update();
+}
+
 void newCamera::ProcessMouseMovement(float xoffset, float yoffset, GLboolean constrainPitch)
 {
 	xoffset *= 0.001f;
 	yoffset *= 0.001f;
-
+	
 	lookat = normalize(lookat + vec3(xoffset, yoffset, 0));
 	update();
 }
@@ -115,7 +133,7 @@ void newCamera::update()
 {
 	vec3 u, v, w;
 
-	auto theta = vfov / 180.0 * PI;
+	auto theta = radians(vfov);
 	float half_height = tan(theta / 2);
 	float half_width = aspect * half_height;
 	w = normalize(origin - lookat);
@@ -126,4 +144,8 @@ void newCamera::update()
 
 	horizontal = 2 * half_width * u;
 	vertical = 2 * half_height * v;
+
+	front = normalize(lookat - origin);
+	right = normalize(cross(vup, -front));
+	up = normalize(cross(right, front));
 }
