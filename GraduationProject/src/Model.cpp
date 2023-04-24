@@ -225,3 +225,11 @@ glm::vec3 Model::getTexColor(const unsigned char* data, glm::vec2 uv, int w, int
 
     return res;
 }
+
+void Model::changeMaterial(Material& m)
+{
+    for (auto& t : triangles)
+    {
+        t.param3 = glm::vec3(m.sheen, m.sheenTine, 0.1f);
+    }
+}

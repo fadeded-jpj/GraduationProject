@@ -116,10 +116,6 @@ void Scene::Render(Shader& shader)
 	shader.SetUniform1i("triangles", 0);
 	shader.SetUniform1i("bvh", 1);
 
-	shader.SetUniform1i("triangleCount", trianglesData.size());
-	shader.SetUniform1i("BVHCount", BVHData.size());
-
-
 	glBindVertexArray(VAO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);

@@ -31,6 +31,8 @@ public:
 	void setEmissive(glm::vec3 emissive) {}
 	void encodedData(glm::vec3 pos = glm::vec3(0));
 
+	void changeMaterial(Material& m);
+
 private:
 	void loadModel(const std::string path);
 	void processNode(aiNode* node, const aiScene* scene);

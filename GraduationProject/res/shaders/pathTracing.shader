@@ -91,7 +91,6 @@ struct BVHNode {
 uniform Camera camera;
 uniform samplerBuffer triangles;
 uniform samplerBuffer bvh;
-uniform int triangleCount;
 uniform int frameCount;
 uniform sampler2D lastFrame;
 
@@ -829,7 +828,7 @@ vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 	float ss = 1.25 * (Fss * (1.0 / (NdotL + NdotV) - 0.5) + 0.5);
 
 	vec3 diffuse = Cdlin / PI * mix(Fd, ss, material.subsurface) * (1 - material.metallic);
-	
+
 	// specular
 	float Cdlum = 0.3 * Cdlin.x + 0.6 * Cdlin.y + 0.1 * Cdlin.z;
 	vec3 Ctint = (Cdlum) > 0 ? (Cdlin / Cdlum) : vec3(1);
@@ -851,6 +850,12 @@ vec3 Disney_BRDF(vec3 V, vec3 N, vec3 L, in Material material)
 	float Gr = smithG_GGX(NdotL, 0.25) * smithG_GGX(NdotV, 0.25);
 	
 	vec3 clearcoat = vec3(0.25 * Gr * Fr * Dr * material.clearcoat);
+
+	//sheen
+	vec3 Csheen = mix(vec3(1), Ctint, material.sheenTine);
+	vec3 Fsheen = FH * material.sheen * Csheen;
+
+	diffuse += Fsheen;
 
 	return diffuse + specular + clearcoat;
 }

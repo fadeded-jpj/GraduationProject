@@ -36,8 +36,6 @@ test::TestRenderPhoto::TestRenderPhoto()
 	m_PBRShader->SetUniform3fv("light.Pos", lightPos);
 	m_PBRShader->SetUniform3fv("light.color", LightMaterial.emissive);
 
-	m_LightShader = std::make_unique<Shader>("res/shaders/basic.shader");
-
 	m_DenoiseShader = std::make_unique<Shader>("res/shaders/denoise.shader");
 	m_DenoiseShader->Bind();
 	m_DenoiseShader->SetUniform1i("texture0", 0);
@@ -63,6 +61,7 @@ test::TestRenderPhoto::TestRenderPhoto()
 	// model
 	models.push_back(std::make_unique<Model>(modelPath));
 	models[0]->encodedData(modelPos);
+	
 
 	// 场景
 	m_Scene = std::make_unique<Scene>();
@@ -130,7 +129,6 @@ void test::TestRenderPhoto::OnRender()
 		m_PathTracingShader->SetUniform3fv("camera.origin", origin);
 
 		m_DenoiseShader->Bind();
-		m_DenoiseShader->SetUniform1i("frameCout", frameCounter);
 
 		// 渲染数据读入帧缓冲区
 		m_FBO->BindTexture(2);
@@ -139,17 +137,23 @@ void test::TestRenderPhoto::OnRender()
 
 		// 绘制缓冲区内容到输出缓冲区
 		m_FBO->UnBind();
+		if (denoise)
+		{
+			m_FBO_OUT->Bind();
+			m_FBO_OUT->BindTexture(2);
 
-		m_FBO_OUT->Bind();
-		m_FBO_OUT->BindTexture(2);
+			m_FBO->Draw(*m_FrameShader);
 
-		m_FBO->Draw(*m_FrameShader);
+			m_FBO_OUT->DrawBuffer(1);
 
-		m_FBO_OUT->DrawBuffer(1);
-
-		//输出缓冲区处理后绘制图像
-		m_FBO_OUT->UnBind();
-		m_FBO_OUT->Draw(*m_DenoiseShader);
+			//输出缓冲区处理后绘制图像
+			m_FBO_OUT->UnBind();
+			m_FBO_OUT->Draw(*m_DenoiseShader);
+		}
+		else
+		{
+			m_FBO->Draw(*m_FrameShader);
+		}
 	}
 }
 
@@ -181,6 +185,9 @@ void test::TestRenderPhoto::OnImGuiRender()
 
 	ImGui::BulletText("model");
 	ImGui::SliderFloat3("model position", &modelPos.x, -6.0, 2.0);
+	ImGui::SliderFloat("model sheen", &modelMaterial.sheen, 0.0f, 1.0f);
+	ImGui::SliderFloat("model sheenTine", &modelMaterial.sheenTine, 0.0f, 1.0f);
+
 	
 	if (ImGui::Button("modify"))
 	{
@@ -189,9 +196,11 @@ void test::TestRenderPhoto::OnImGuiRender()
 		cubes[1]->changeMaterial(cube2Material);
 		spheres[0]->changeMaterial(sphereMaterial);
 		models[0]->encodedData(modelPos);
+		models[0]->changeMaterial(modelMaterial);
 		initScene();
 		m_Scene->setInited();
 	}
+	ImGui::Checkbox("denoise", &denoise);
 
 	ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 	ImGui::Text("current SPP: %d frame", frameCounter);

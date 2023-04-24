@@ -53,7 +53,6 @@ namespace test {
 		std::unique_ptr<Shader> m_PathTracingShader;
 		std::unique_ptr<Shader> m_FrameShader;
 		std::unique_ptr<Shader> m_PBRShader;
-		std::unique_ptr<Shader> m_LightShader;
 		std::unique_ptr<Shader> m_DenoiseShader;
 		
 		std::unique_ptr<Scene> m_Scene;
@@ -74,10 +73,12 @@ namespace test {
 		Material cube1Material = CYAN;
 		Material cube2Material = WHITE;
 		Material sphereMaterial = WHITE_MIRROR;
+		Material modelMaterial;
 
 		int spp = 1;
 		int frameCounter = 0;
 		bool bufferClear = false;
+		bool denoise = false;
 		std::string modelPath = "res/obj/HuTao/HuTao.pmx";
 		
 		Mode currentMode = Mode::Diffuse;
