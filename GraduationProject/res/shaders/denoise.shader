@@ -21,7 +21,7 @@ in vec2 screenCoord;
 
 uniform sampler2D texture0;
 
-const float offset = 1.0 / 900.0;
+const float offset = 1.0 / 800.0;
 
 void main()
 {

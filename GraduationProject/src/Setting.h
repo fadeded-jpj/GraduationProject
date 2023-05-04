@@ -9,8 +9,8 @@
 
 
 //-------- windows settings-----------
-extern const unsigned int SCR_WIDTH = 900;
-extern const unsigned int SCR_HEIGHT = 900;
+extern const unsigned int SCR_WIDTH = 800;
+extern const unsigned int SCR_HEIGHT = 800;
 
 extern bool mouse = true;
 

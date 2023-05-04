@@ -790,7 +790,7 @@ float getPDF_Specular(vec3 V, vec3 N, vec3 L, in Material material)
 	// 计算pdf
 	float Ds = GTR2(NdotH, alpha_GTR2);
 
-	float pdf_diffuse = NdotL / PI;
+	float pdf_diffuse = NdotL / (PI);
 	float pdf_specular = Ds * NdotH / (4.0 * LdotH);
 
 
@@ -1056,7 +1056,7 @@ void main()
 	color += r.material.emissive;
 	// 与上一拟合
 	vec3 lastColor = texture(lastFrame, screenCoord.xy).rgb;
-	color = mix(lastColor, color, max(1.0 / float(frameCount + 1), 0.001));
+	color = mix(lastColor, color, 1.0 / float(frameCount + 1));
 
 	FragColor = vec4(color, 1);
 }
